@@ -1,0 +1,16 @@
+{
+  "name": "modbrew-website",
+  "version": "1.0.0",
+  "description": "ModBrew Coffee Shop Management System - Landing Page and Admin Dashboard",
+  "private": true,
+  "scripts": {
+    "dev": "cd modbrew-landing && npm run dev",
+    "build": "cd modbrew-landing && npm run build",
+    "install:all": "cd modbrew-landing && npm install",
+    "clean": "rm -rf modbrew-landing/node_modules modbrew-landing/dist"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
