@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd modbrew-landing && npm install && npm run build",
+  "outputDirectory": "modbrew-landing/dist",
+  "installCommand": "cd modbrew-landing && npm install",
+  "framework": "vite"
+}
