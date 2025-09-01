@@ -3,91 +3,182 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Users, DollarSign, Coffee, TrendingUp, UserPlus, Plus, Minus } from "lucide-react";
-import { useState } from "react";
+import { Users, DollarSign, Coffee, TrendingUp, UserPlus, Minus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
+import { toast } from "sonner";
 
 const Home = () => {
-  const [dailyCustomers, setDailyCustomers] = useState(0);
-  const [customerInput, setCustomerInput] = useState("");
-  const [selectedDate, setSelectedDate] = useState(() => {
+  // Revenue state
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [isLoadingRevenue, setIsLoadingRevenue] = useState(true);
+
+  // Customers state
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
+
+  // Expenses state
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
+
+  // Daily Sales state
+  const [salesDate, setSalesDate] = useState(() => {
     const now = new Date();
     const easternTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
     return easternTime.toISOString().split('T')[0];
   });
+  const [customerCount, setCustomerCount] = useState("");
+  const [grossSales, setGrossSales] = useState("");
 
-  const [totalMoney, setTotalMoney] = useState(0);
-  const [moneyInput, setMoneyInput] = useState("");
-  const [moneyDate, setMoneyDate] = useState(() => {
-    const now = new Date();
-    const easternTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
-    return easternTime.toISOString().split('T')[0];
-  });
-
-  const [expenses, setExpenses] = useState<Array<{id: number, itemName: string, date: string, buyer: string}>>([]);
-  const [expenseItemName, setExpenseItemName] = useState("");
+  // Expenses state
   const [expenseDate, setExpenseDate] = useState(() => {
     const now = new Date();
     const easternTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
     return easternTime.toISOString().split('T')[0];
   });
-  const [expenseBuyer, setExpenseBuyer] = useState("");
+  const [expenseName, setExpenseName] = useState("");
+  const [expenseItem, setExpenseItem] = useState("");
+  const [customItem, setCustomItem] = useState("");
+  const [expensePrice, setExpensePrice] = useState("");
 
-  const handleAddDailyCustomers = () => {
-    const num = parseInt(customerInput);
-    if (!isNaN(num) && num > 0) {
-      setDailyCustomers(prev => prev + num);
-      setCustomerInput("");
+  // Fetch total revenue, customers, and expenses from database
+  const fetchTotalRevenue = async () => {
+    try {
+      // Fetch sales data
+      const { data: salesData, error: salesError } = await supabase
+        .from('daily_sales')
+        .select('gross_sales, customer_count');
+
+      if (salesError) {
+        console.error('Error fetching sales data:', salesError);
+        return;
+      }
+
+      // Fetch expenses data
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('price');
+
+      if (expensesError) {
+        console.error('Error fetching expenses data:', expensesError);
+        return;
+      }
+
+      const totalRevenue = salesData?.reduce((sum, sale) => sum + (sale.gross_sales || 0), 0) || 0;
+      const totalCustomers = salesData?.reduce((sum, sale) => sum + (sale.customer_count || 0), 0) || 0;
+      const totalExpenses = expensesData?.reduce((sum, expense) => sum + (expense.price || 0), 0) || 0;
+      
+      setTotalRevenue(totalRevenue);
+      setTotalCustomers(totalCustomers);
+      setTotalExpenses(totalExpenses);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoadingRevenue(false);
+      setIsLoadingCustomers(false);
+      setIsLoadingExpenses(false);
     }
   };
 
-  const handleAddMoney = () => {
-    const amount = parseFloat(moneyInput);
-    if (!isNaN(amount) && amount > 0) {
-      setTotalMoney(prev => prev + amount);
-      setMoneyInput("");
+  // Load total revenue on component mount
+  useEffect(() => {
+    fetchTotalRevenue();
+  }, []);
+
+  const handleAddDailySales = async () => {
+    const customerCountNum = parseInt(customerCount);
+    const grossSalesNum = parseFloat(grossSales);
+    
+    if (!isNaN(customerCountNum) && customerCountNum > 0 && !isNaN(grossSalesNum) && grossSalesNum > 0) {
+      try {
+        const { error } = await supabase
+          .from('daily_sales')
+          .insert({
+            sales_date: salesDate,
+            customer_count: customerCountNum,
+            gross_sales: grossSalesNum
+          });
+
+        if (error) {
+          toast.error('Error adding daily sales: ' + error.message);
+        } else {
+          toast.success('Daily sales added successfully!');
+          setCustomerCount("");
+          setGrossSales("");
+          // Refresh total revenue after adding new sales
+          fetchTotalRevenue();
+        }
+      } catch (error) {
+        toast.error('Error adding daily sales');
+        console.error('Error:', error);
+      }
+    } else {
+      toast.error('Please enter valid numbers for customer count and gross sales');
     }
   };
 
-  const handleAddExpense = () => {
-    if (expenseItemName.trim() && expenseBuyer) {
-      const newExpense = {
-        id: Date.now(),
-        itemName: expenseItemName.trim(),
-        date: expenseDate,
-        buyer: expenseBuyer
-      };
-      setExpenses(prev => [...prev, newExpense]);
-      setExpenseItemName("");
-      setExpenseBuyer("");
+  const handleAddExpense = async () => {
+    const price = parseFloat(expensePrice);
+    const selectedItem = expenseItem === "other" ? customItem.trim() : expenseItem;
+    
+    if (expenseName.trim() && selectedItem && !isNaN(price) && price > 0) {
+      try {
+        const { error } = await supabase
+          .from('expenses')
+          .insert({
+            purchased_at: expenseDate + 'T00:00:00Z', // Convert date to timestamp
+            item_name: `${expenseName.trim()} - ${selectedItem}`, // Combine name and item
+            price: price,
+            purchaser: 'will' // Default purchaser, you can modify this logic
+          });
+
+        if (error) {
+          toast.error('Error adding expense: ' + error.message);
+        } else {
+          toast.success('Expense added successfully!');
+          setExpenseName("");
+          setExpenseItem("");
+          setCustomItem("");
+          setExpensePrice("");
+          // Refresh total expenses after adding new expense
+          fetchTotalRevenue();
+        }
+      } catch (error) {
+        toast.error('Error adding expense');
+        console.error('Error:', error);
+      }
+    } else {
+      toast.error('Please fill in all fields with valid values');
     }
   };
 
   const stats = [
     { 
-      title: "Today's Revenue", 
-      value: "$1,247", 
-      change: "+12% from yesterday", 
+      title: "Total Revenue", 
+      value: isLoadingRevenue ? "Loading..." : `$${totalRevenue.toLocaleString()}`, 
+      change: "All time sales", 
       icon: DollarSign, 
       color: "text-green-600" 
     },
     { 
-      title: "Active Customers", 
-      value: "89", 
-      change: "+5 new today", 
+      title: "Total Customers", 
+      value: isLoadingCustomers ? "Loading..." : totalCustomers.toLocaleString(), 
+      change: "All time customers", 
       icon: Users, 
       color: "text-blue-600" 
     },
     { 
-      title: "Cups Served", 
-      value: "234", 
-      change: "Peak: 2:30 PM", 
+      title: "Total Expenses", 
+      value: isLoadingExpenses ? "Loading..." : `$${totalExpenses.toLocaleString()}`, 
+      change: "All time expenses", 
       icon: Coffee, 
       color: "text-amber-600" 
     },
     { 
       title: "Avg Order Value", 
-      value: "$8.50", 
-      change: "+$0.75 this week", 
+      value: isLoadingRevenue || isLoadingCustomers ? "Loading..." : 
+             totalCustomers > 0 ? `$${(totalRevenue / totalCustomers).toFixed(2)}` : "$0.00", 
+      change: "Revenue per customer", 
       icon: TrendingUp, 
       color: "text-purple-600" 
     }
@@ -95,21 +186,14 @@ const Home = () => {
 
   const quickActions = [
     { 
-      title: "Add Daily Customers", 
+      title: "Sales", 
       icon: UserPlus, 
       color: "from-green-500 to-green-600",
       isModal: true,
-      modalType: "customers"
+      modalType: "sales"
     },
     { 
-      title: "Add Money", 
-      icon: Plus, 
-      color: "from-amber-500 to-amber-600",
-      isModal: true,
-      modalType: "money"
-    },
-    { 
-      title: "Add Expense", 
+      title: "Expenses", 
       icon: Minus, 
       color: "from-blue-500 to-blue-600",
       isModal: true,
@@ -172,22 +256,12 @@ const Home = () => {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>
-                        {action.modalType === "customers" ? "Add Daily Customers" : 
-                         action.modalType === "money" ? "Add Money" : "Add Expense"}
+                        {action.modalType === "sales" ? "Add Sales" : "Add Expense"}
                       </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
                       {action.modalType === "expense" ? (
                         <>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Item Name</label>
-                            <Input
-                              type="text"
-                              placeholder="Enter item name"
-                              value={expenseItemName}
-                              onChange={(e) => setExpenseItemName(e.target.value)}
-                            />
-                          </div>
                           <div className="space-y-2">
                             <label className="text-sm font-medium">Date</label>
                             <Input
@@ -197,27 +271,58 @@ const Home = () => {
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Who Bought</label>
-                            <Select value={expenseBuyer} onValueChange={setExpenseBuyer}>
+                            <label className="text-sm font-medium">Name</label>
+                            <Input
+                              type="text"
+                              placeholder="Enter name"
+                              value={expenseName}
+                              onChange={(e) => setExpenseName(e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Item</label>
+                            <Select value={expenseItem} onValueChange={setExpenseItem}>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select buyer" />
+                                <SelectValue placeholder="Select an item" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="mary">Mary</SelectItem>
-                                <SelectItem value="will">Will</SelectItem>
-                                <SelectItem value="ben">Ben</SelectItem>
+                                <SelectItem value="milk">Milk</SelectItem>
+                                <SelectItem value="syrup">Syrup</SelectItem>
+                                <SelectItem value="cups">Cups</SelectItem>
+                                <SelectItem value="coffee">Coffee</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
-                          <div className="text-sm text-slate-600">
-                            Total expenses: <span className="font-bold text-blue-600">{expenses.length}</span>
+                          {expenseItem === "other" && (
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Custom Item</label>
+                              <Input
+                                type="text"
+                                placeholder="Enter custom item name"
+                                value={customItem}
+                                onChange={(e) => setCustomItem(e.target.value)}
+                              />
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Price ($)</label>
+                            <Input
+                              type="number"
+                              placeholder="Enter price"
+                              value={expensePrice}
+                              onChange={(e) => setExpensePrice(e.target.value)}
+                              min="0"
+                              step="0.01"
+                            />
                           </div>
                           <div className="flex justify-end space-x-2">
                             <Button
                               variant="outline"
                               onClick={() => {
-                                setExpenseItemName("");
-                                setExpenseBuyer("");
+                                setExpenseName("");
+                                setExpenseItem("");
+                                setExpensePrice("");
                               }}
                             >
                               Clear
@@ -236,42 +341,47 @@ const Home = () => {
                             <label className="text-sm font-medium">Date</label>
                             <Input
                               type="date"
-                              value={action.modalType === "customers" ? selectedDate : moneyDate}
-                              onChange={(e) => action.modalType === "customers" ? setSelectedDate(e.target.value) : setMoneyDate(e.target.value)}
+                              value={salesDate}
+                              onChange={(e) => setSalesDate(e.target.value)}
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">
-                              {action.modalType === "customers" ? "Number of customers" : "Amount ($)"}
-                            </label>
+                            <label className="text-sm font-medium">Customer Count</label>
                             <Input
-                              type={action.modalType === "customers" ? "number" : "number"}
-                              placeholder={action.modalType === "customers" ? "Enter number of customers" : "Enter amount"}
-                              value={action.modalType === "customers" ? customerInput : moneyInput}
-                              onChange={(e) => action.modalType === "customers" ? setCustomerInput(e.target.value) : setMoneyInput(e.target.value)}
+                              type="number"
+                              placeholder="Enter number of customers"
+                              value={customerCount}
+                              onChange={(e) => setCustomerCount(e.target.value)}
                               min="1"
-                              step={action.modalType === "money" ? "0.01" : "1"}
+                              step="1"
                             />
                           </div>
-                          <div className="text-sm text-slate-600">
-                            {action.modalType === "customers" ? (
-                              <>Current daily customers: <span className="font-bold text-green-600">{dailyCustomers}</span></>
-                            ) : (
-                              <>Total money: <span className="font-bold text-amber-600">${totalMoney.toFixed(2)}</span></>
-                            )}
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Sales ($)</label>
+                            <Input
+                              type="number"
+                              placeholder="Enter sales amount"
+                              value={grossSales}
+                              onChange={(e) => setGrossSales(e.target.value)}
+                              min="0"
+                              step="0.01"
+                            />
                           </div>
                           <div className="flex justify-end space-x-2">
                             <Button
                               variant="outline"
-                              onClick={() => action.modalType === "customers" ? setCustomerInput("") : setMoneyInput("")}
+                              onClick={() => {
+                                setCustomerCount("");
+                                setGrossSales("");
+                              }}
                             >
                               Clear
                             </Button>
                             <Button
                               className={`bg-gradient-to-r ${action.color}`}
-                              onClick={action.modalType === "customers" ? handleAddDailyCustomers : handleAddMoney}
+                              onClick={handleAddDailySales}
                             >
-                              {action.modalType === "customers" ? "Add Customers" : "Add Money"}
+                              Add Sales
                             </Button>
                           </div>
                         </>

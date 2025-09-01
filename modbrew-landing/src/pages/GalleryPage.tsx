@@ -1,5 +1,4 @@
 import Navigation from '../components/layout/Navigation'
-import Footer from '../components/layout/Footer'
 
 export default function GalleryPage() {
   return (
@@ -56,8 +55,6 @@ export default function GalleryPage() {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   )
 }
