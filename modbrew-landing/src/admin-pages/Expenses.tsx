@@ -4,106 +4,39 @@ import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Receipt, TrendingDown, AlertTriangle, Plus, CreditCard, Building } from "lucide-react";
-import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import { useModBrew } from "../contexts/ModBrewContext";
 
 const Expenses = () => {
-  // State for expenses data
-  const [expensesData, setExpensesData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [totalExpenses, setTotalExpenses] = useState(0);
-  const [currentMonthExpenses, setCurrentMonthExpenses] = useState(0);
-  const [weeklyExpenses, setWeeklyExpenses] = useState(0);
-  const [avgDailyExpenses, setAvgDailyExpenses] = useState(0);
+  // Get data from context
+  const { data } = useModBrew();
 
-  // Fetch expenses data from database
-  const fetchExpensesData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .order('purchased_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching expenses data:', error);
-        return;
-      }
-
-      setExpensesData(data || []);
-
-      // Calculate totals
-      const total = data?.reduce((sum, expense) => sum + (expense.price || 0), 0) || 0;
-      setTotalExpenses(total);
-
-      // Calculate monthly expenses (current month)
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-      
-      const monthlyData = data?.filter(expense => {
-        const expenseDate = new Date(expense.purchased_at);
-        return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
-      }) || [];
-      
-      const monthly = monthlyData.reduce((sum, expense) => sum + (expense.price || 0), 0);
-      setCurrentMonthExpenses(monthly);
-
-      // Calculate weekly expenses (last 7 days)
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      
-      const weeklyData = data?.filter(expense => {
-        const expenseDate = new Date(expense.purchased_at);
-        return expenseDate >= weekAgo;
-      }) || [];
-      
-      const weekly = weeklyData.reduce((sum, expense) => sum + (expense.price || 0), 0);
-      setWeeklyExpenses(weekly);
-
-      // Calculate average daily expenses
-      const daysWithExpenses = new Set(data?.map(expense => 
-        new Date(expense.purchased_at).toDateString()
-      )).size;
-      
-      const avgDaily = daysWithExpenses > 0 ? total / daysWithExpenses : 0;
-      setAvgDailyExpenses(avgDaily);
-
-    } catch (error) {
-      console.error('Error fetching expenses data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchExpensesData();
-  }, []);
+  // No need for individual data fetching - context handles this
 
   const expenseStats = [
     { 
       title: "Total Expenses", 
-      value: isLoading ? "Loading..." : `$${totalExpenses.toLocaleString()}`, 
+      value: data?.expensesLoading ? "Loading..." : `$${data?.expenseStats.totalExpenses.toLocaleString() || 0}`, 
       change: "All time expenses", 
       icon: Receipt, 
       color: "text-red-600" 
     },
     { 
       title: "This Month", 
-      value: isLoading ? "Loading..." : `$${currentMonthExpenses.toLocaleString()}`, 
+      value: data?.expensesLoading ? "Loading..." : `$${data?.expenseStats.monthlyExpenses.toLocaleString() || 0}`, 
       change: "Current month expenses", 
       icon: TrendingDown, 
       color: "text-green-600" 
     },
     { 
       title: "This Week", 
-      value: isLoading ? "Loading..." : `$${weeklyExpenses.toLocaleString()}`, 
+      value: data?.expensesLoading ? "Loading..." : `$${data?.expenseStats.weeklyExpenses.toLocaleString() || 0}`, 
       change: "Last 7 days expenses", 
       icon: AlertTriangle, 
       color: "text-orange-600" 
     },
     { 
       title: "Avg Daily Cost", 
-      value: isLoading ? "Loading..." : `$${avgDailyExpenses.toFixed(2)}`, 
+      value: data?.expensesLoading ? "Loading..." : `$${data?.expenseStats.avgDailyExpenses.toFixed(2) || "0.00"}`, 
       change: "Average per day", 
       icon: Building, 
       color: "text-blue-600" 
@@ -129,9 +62,9 @@ const Expenses = () => {
 
   // Generate recent expenses from actual data
   const getRecentExpenses = () => {
-    if (!expensesData.length) return [];
+    if (!data?.expenses.length) return [];
     
-    return expensesData.slice(0, 6).map((expense, index) => {
+    return data.expenses.slice(0, 6).map((expense, index) => {
       const date = new Date(expense.purchased_at);
       const timeAgo = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
       const timeText = timeAgo === 0 ? "Today" : timeAgo === 1 ? "Yesterday" : `${timeAgo} days ago`;
@@ -285,7 +218,7 @@ const Expenses = () => {
               <CardTitle className="text-xl font-bold text-slate-800">Recent Expenses</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {data?.expensesLoading ? (
                 <div className="flex items-center justify-center h-[200px]">
                   <p className="text-slate-500">Loading expenses data...</p>
                 </div>

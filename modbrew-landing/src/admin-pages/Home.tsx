@@ -4,22 +4,14 @@ import { Input } from "../components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Users, DollarSign, Coffee, TrendingUp, UserPlus, Minus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
+import { useModBrew } from "../contexts/ModBrewContext";
 
 const Home = () => {
-  // Revenue state
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [isLoadingRevenue, setIsLoadingRevenue] = useState(true);
-
-  // Customers state
-  const [totalCustomers, setTotalCustomers] = useState(0);
-  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
-
-  // Expenses state
-  const [totalExpenses, setTotalExpenses] = useState(0);
-  const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
+  // Get data from context
+  const { data, refreshSales, refreshExpenses } = useModBrew();
 
   // Daily Sales state
   const [salesDate, setSalesDate] = useState(() => {
@@ -41,49 +33,7 @@ const Home = () => {
   const [customItem, setCustomItem] = useState("");
   const [expensePrice, setExpensePrice] = useState("");
 
-  // Fetch total revenue, customers, and expenses from database
-  const fetchTotalRevenue = async () => {
-    try {
-      // Fetch sales data
-      const { data: salesData, error: salesError } = await supabase
-        .from('daily_sales')
-        .select('gross_sales, customer_count');
-
-      if (salesError) {
-        console.error('Error fetching sales data:', salesError);
-        return;
-      }
-
-      // Fetch expenses data
-      const { data: expensesData, error: expensesError } = await supabase
-        .from('expenses')
-        .select('price');
-
-      if (expensesError) {
-        console.error('Error fetching expenses data:', expensesError);
-        return;
-      }
-
-      const totalRevenue = salesData?.reduce((sum, sale) => sum + (sale.gross_sales || 0), 0) || 0;
-      const totalCustomers = salesData?.reduce((sum, sale) => sum + (sale.customer_count || 0), 0) || 0;
-      const totalExpenses = expensesData?.reduce((sum, expense) => sum + (expense.price || 0), 0) || 0;
-      
-      setTotalRevenue(totalRevenue);
-      setTotalCustomers(totalCustomers);
-      setTotalExpenses(totalExpenses);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setIsLoadingRevenue(false);
-      setIsLoadingCustomers(false);
-      setIsLoadingExpenses(false);
-    }
-  };
-
-  // Load total revenue on component mount
-  useEffect(() => {
-    fetchTotalRevenue();
-  }, []);
+  // No need for individual data fetching - context handles this
 
   const handleAddDailySales = async () => {
     const customerCountNum = parseInt(customerCount);
@@ -105,8 +55,8 @@ const Home = () => {
           toast.success('Daily sales added successfully!');
           setCustomerCount("");
           setGrossSales("");
-          // Refresh total revenue after adding new sales
-          fetchTotalRevenue();
+          // Refresh sales data after adding new sales
+          refreshSales();
         }
       } catch (error) {
         toast.error('Error adding daily sales');
@@ -140,8 +90,8 @@ const Home = () => {
           setExpenseItem("");
           setCustomItem("");
           setExpensePrice("");
-          // Refresh total expenses after adding new expense
-          fetchTotalRevenue();
+          // Refresh expenses data after adding new expense
+          refreshExpenses();
         }
       } catch (error) {
         toast.error('Error adding expense');
@@ -155,29 +105,30 @@ const Home = () => {
   const stats = [
     { 
       title: "Total Revenue", 
-      value: isLoadingRevenue ? "Loading..." : `$${totalRevenue.toLocaleString()}`, 
+      value: data?.salesLoading ? "Loading..." : `$${data?.salesStats.totalRevenue.toLocaleString() || 0}`, 
       change: "All time sales", 
       icon: DollarSign, 
       color: "text-green-600" 
     },
     { 
       title: "Total Customers", 
-      value: isLoadingCustomers ? "Loading..." : totalCustomers.toLocaleString(), 
+      value: data?.salesLoading ? "Loading..." : (data?.salesStats.totalCustomers || 0).toLocaleString(), 
       change: "All time customers", 
       icon: Users, 
       color: "text-blue-600" 
     },
     { 
       title: "Total Expenses", 
-      value: isLoadingExpenses ? "Loading..." : `$${totalExpenses.toLocaleString()}`, 
+      value: data?.expensesLoading ? "Loading..." : `$${data?.expenseStats.totalExpenses.toLocaleString() || 0}`, 
       change: "All time expenses", 
       icon: Coffee, 
       color: "text-amber-600" 
     },
     { 
       title: "Avg Order Value", 
-      value: isLoadingRevenue || isLoadingCustomers ? "Loading..." : 
-             totalCustomers > 0 ? `$${(totalRevenue / totalCustomers).toFixed(2)}` : "$0.00", 
+      value: data?.salesLoading ? "Loading..." : 
+             data?.salesStats.totalCustomers && data.salesStats.totalCustomers > 0 ? 
+             `$${data.salesStats.avgOrderValue.toFixed(2)}` : "$0.00", 
       change: "Revenue per customer", 
       icon: TrendingUp, 
       color: "text-purple-600" 

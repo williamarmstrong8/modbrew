@@ -3,88 +3,40 @@ import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { DollarSign, TrendingUp, ShoppingCart, Clock } from "lucide-react";
-import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import { useModBrew } from "../contexts/ModBrewContext";
 
 const Sales = () => {
-  // State for sales data
-  const [salesData, setSalesData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [totalCustomers, setTotalCustomers] = useState(0);
-  const [weeklyRevenue, setWeeklyRevenue] = useState(0);
-  const [weeklyCustomers, setWeeklyCustomers] = useState(0);
+  // Get data from context
+  const { data } = useModBrew();
 
-  // Fetch sales data from database
-  const fetchSalesData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('daily_sales')
-        .select('*')
-        .order('sales_date', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching sales data:', error);
-        return;
-      }
-
-      setSalesData(data || []);
-
-      // Calculate totals
-      const totalRev = data?.reduce((sum, sale) => sum + (sale.gross_sales || 0), 0) || 0;
-      const totalCust = data?.reduce((sum, sale) => sum + (sale.customer_count || 0), 0) || 0;
-
-      // Calculate weekly data (last 7 days)
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const weekAgoStr = weekAgo.toISOString().split('T')[0];
-      
-      const weeklyData = data?.filter(sale => sale.sales_date >= weekAgoStr) || [];
-      const weeklyRev = weeklyData.reduce((sum, sale) => sum + (sale.gross_sales || 0), 0);
-      const weeklyCust = weeklyData.reduce((sum, sale) => sum + (sale.customer_count || 0), 0);
-
-      setTotalRevenue(totalRev);
-      setTotalCustomers(totalCust);
-      setWeeklyRevenue(weeklyRev);
-      setWeeklyCustomers(weeklyCust);
-    } catch (error) {
-      console.error('Error fetching sales data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSalesData();
-  }, []);
-
-  const avgOrderValue = totalCustomers > 0 ? (totalRevenue / totalCustomers) : 0;
+  // No need for individual data fetching - context handles this
+  const avgOrderValue = data?.salesStats.avgOrderValue || 0;
 
   const salesStats = [
     { 
       title: "Weekly Sales", 
-      value: isLoading ? "Loading..." : `$${weeklyRevenue.toLocaleString()}`, 
+      value: data?.salesLoading ? "Loading..." : `$${data?.salesStats.weeklyRevenue.toLocaleString() || 0}`, 
       change: "Last 7 days revenue", 
       icon: DollarSign, 
       color: "text-green-600" 
     },
     { 
       title: "Weekly Customers", 
-      value: isLoading ? "Loading..." : weeklyCustomers.toString(), 
+      value: data?.salesLoading ? "Loading..." : (data?.salesStats.weeklyCustomers || 0).toString(), 
       change: "Last 7 days customers", 
       icon: ShoppingCart, 
       color: "text-blue-600" 
     },
     { 
       title: "Avg Order Value", 
-      value: isLoading ? "Loading..." : `$${avgOrderValue.toFixed(2)}`, 
+      value: data?.salesLoading ? "Loading..." : `$${avgOrderValue.toFixed(2)}`, 
       change: "Revenue per customer", 
       icon: TrendingUp, 
       color: "text-purple-600" 
     },
     { 
       title: "Total Sales", 
-      value: isLoading ? "Loading..." : `$${totalRevenue.toLocaleString()}`, 
+      value: data?.salesLoading ? "Loading..." : `$${data?.salesStats.totalRevenue.toLocaleString() || 0}`, 
       change: "All time revenue", 
       icon: Clock, 
       color: "text-orange-600" 
@@ -93,10 +45,10 @@ const Sales = () => {
 
   // Generate chart data from actual sales data
   const getWeeklySalesData = () => {
-    if (!salesData.length) return [];
+    if (!data?.sales.length) return [];
     
     // Get last 7 days of data
-    const last7Days = salesData.slice(0, 7).reverse();
+    const last7Days = data.sales.slice(0, 7).reverse();
     
     return last7Days.map(sale => {
       const date = new Date(sale.sales_date);
@@ -113,9 +65,9 @@ const Sales = () => {
 
   // Generate recent sales from actual data
   const getRecentSales = () => {
-    if (!salesData.length) return [];
+    if (!data?.sales.length) return [];
     
-    return salesData.slice(0, 6).map((sale, index) => {
+    return data.sales.slice(0, 6).map((sale, index) => {
       const date = new Date(sale.sales_date);
       const timeAgo = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
       const timeText = timeAgo === 0 ? "Today" : timeAgo === 1 ? "Yesterday" : `${timeAgo} days ago`;
@@ -189,11 +141,11 @@ const Sales = () => {
                 <CardTitle className="text-xl font-bold text-slate-800">Sales Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
+                {data?.salesLoading ? (
                   <div className="flex items-center justify-center h-[300px]">
                     <p className="text-slate-500">Loading sales data...</p>
                   </div>
-                ) : salesData.length === 0 ? (
+                ) : !data?.sales.length ? (
                   <div className="flex items-center justify-center h-[300px]">
                     <p className="text-slate-500">No sales data available</p>
                   </div>
@@ -201,11 +153,11 @@ const Sales = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <p className="text-2xl font-bold text-green-600">${totalRevenue.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-green-600">${data.salesStats.totalRevenue.toLocaleString()}</p>
                         <p className="text-sm text-slate-600">Total Revenue</p>
                       </div>
                       <div className="text-center p-4 bg-blue-50 rounded-lg">
-                        <p className="text-2xl font-bold text-blue-600">{totalCustomers.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-blue-600">{data.salesStats.totalCustomers.toLocaleString()}</p>
                         <p className="text-sm text-slate-600">Total Customers</p>
                       </div>
                     </div>
@@ -244,7 +196,7 @@ const Sales = () => {
               <CardTitle className="text-xl font-bold text-slate-800">Recent Sales</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {data?.salesLoading ? (
                 <div className="flex items-center justify-center h-[200px]">
                   <p className="text-slate-500">Loading sales data...</p>
                 </div>
