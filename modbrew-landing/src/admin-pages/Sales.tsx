@@ -1,89 +1,54 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { DollarSign, TrendingUp, ShoppingCart, Clock } from "lucide-react";
-import { useModBrew } from "../contexts/ModBrewContext";
 
 const Sales = () => {
-  // Get data from context
-  const { data } = useModBrew();
-
-  // No need for individual data fetching - context handles this
-  const avgOrderValue = data?.salesStats.avgOrderValue || 0;
-
   const salesStats = [
-    { 
-      title: "Weekly Sales", 
-      value: data?.salesLoading ? "Loading..." : `$${data?.salesStats.weeklyRevenue.toLocaleString() || 0}`, 
-      change: "Last 7 days revenue", 
-      icon: DollarSign, 
-      color: "text-green-600" 
-    },
-    { 
-      title: "Weekly Customers", 
-      value: data?.salesLoading ? "Loading..." : (data?.salesStats.weeklyCustomers || 0).toString(), 
-      change: "Last 7 days customers", 
-      icon: ShoppingCart, 
-      color: "text-blue-600" 
-    },
-    { 
-      title: "Avg Order Value", 
-      value: data?.salesLoading ? "Loading..." : `$${avgOrderValue.toFixed(2)}`, 
-      change: "Revenue per customer", 
-      icon: TrendingUp, 
-      color: "text-purple-600" 
-    },
-    { 
-      title: "Total Sales", 
-      value: data?.salesLoading ? "Loading..." : `$${data?.salesStats.totalRevenue.toLocaleString() || 0}`, 
-      change: "All time revenue", 
-      icon: Clock, 
-      color: "text-orange-600" 
-    }
+    { title: "Today's Sales", value: "$1,247", change: "+12% from yesterday", icon: DollarSign, color: "text-green-600" },
+    { title: "Orders Today", value: "89", change: "+5 from yesterday", icon: ShoppingCart, color: "text-blue-600" },
+    { title: "Avg Order Value", value: "$14.01", change: "+$0.75 this week", icon: TrendingUp, color: "text-purple-600" },
+    { title: "Pending Orders", value: "12", change: "3 ready for pickup", icon: Clock, color: "text-orange-600" }
   ];
 
-  // Generate chart data from actual sales data
-  const getWeeklySalesData = () => {
-    if (!data?.sales.length) return [];
-    
-    // Get last 7 days of data
-    const last7Days = data.sales.slice(0, 7).reverse();
-    
-    return last7Days.map(sale => {
-      const date = new Date(sale.sales_date);
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-      return {
-        day: dayName,
-        sales: sale.gross_sales || 0,
-        orders: sale.customer_count || 0
-      };
-    });
-  };
+  const hourlySalesData = [
+    { hour: "6 AM", sales: 45, orders: 8 },
+    { hour: "7 AM", sales: 120, orders: 15 },
+    { hour: "8 AM", sales: 280, orders: 32 },
+    { hour: "9 AM", sales: 320, orders: 28 },
+    { hour: "10 AM", sales: 180, orders: 22 },
+    { hour: "11 AM", sales: 150, orders: 18 },
+    { hour: "12 PM", sales: 420, orders: 45 },
+    { hour: "1 PM", sales: 380, orders: 38 },
+    { hour: "2 PM", sales: 290, orders: 31 },
+    { hour: "3 PM", sales: 220, orders: 25 },
+    { hour: "4 PM", sales: 180, orders: 20 },
+    { hour: "5 PM", sales: 160, orders: 18 },
+    { hour: "6 PM", sales: 95, orders: 12 },
+    { hour: "7 PM", sales: 60, orders: 8 },
+    { hour: "8 PM", sales: 30, orders: 4 }
+  ];
 
-  const weeklySalesData = getWeeklySalesData();
+  const weeklySalesData = [
+    { day: "Mon", sales: 850, orders: 67 },
+    { day: "Tue", sales: 920, orders: 72 },
+    { day: "Wed", sales: 1100, orders: 89 },
+    { day: "Thu", sales: 1250, orders: 95 },
+    { day: "Fri", sales: 1450, orders: 108 },
+    { day: "Sat", sales: 1680, orders: 125 },
+    { day: "Sun", sales: 1200, orders: 89 }
+  ];
 
-  // Generate recent sales from actual data
-  const getRecentSales = () => {
-    if (!data?.sales.length) return [];
-    
-    return data.sales.slice(0, 6).map((sale, index) => {
-      const date = new Date(sale.sales_date);
-      const timeAgo = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
-      const timeText = timeAgo === 0 ? "Today" : timeAgo === 1 ? "Yesterday" : `${timeAgo} days ago`;
-      
-      return {
-        id: `#${String(index + 1).padStart(3, '0')}`,
-        date: sale.sales_date,
-        customers: sale.customer_count || 0,
-        total: `$${(sale.gross_sales || 0).toFixed(2)}`,
-        status: "Completed",
-        time: timeText
-      };
-    });
-  };
-
-  const recentSales = getRecentSales();
+  const recentOrders = [
+    { id: "#001", customer: "Sarah Johnson", items: "Cappuccino, Croissant", total: "$12.50", status: "Completed", time: "2 min ago" },
+    { id: "#002", customer: "Mike Chen", items: "Americano, Muffin", total: "$8.75", status: "In Progress", time: "5 min ago" },
+    { id: "#003", customer: "Emma Davis", items: "Latte, Bagel", total: "$10.25", status: "Completed", time: "8 min ago" },
+    { id: "#004", customer: "Alex Rodriguez", items: "Espresso, Danish", total: "$9.50", status: "Pending", time: "12 min ago" },
+    { id: "#005", customer: "Lisa Wang", items: "Cold Brew, Sandwich", total: "$14.00", status: "Completed", time: "15 min ago" },
+    { id: "#006", customer: "David Kim", items: "Frappuccino, Cookie", total: "$11.75", status: "In Progress", time: "18 min ago" }
+  ];
 
   const topSellingItems = [
     { name: "Cappuccino", sales: 45, revenue: "$337.50", growth: "+12%" },
@@ -135,38 +100,21 @@ const Sales = () => {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Sales Summary Chart */}
+            {/* Hourly Sales Chart */}
             <Card className="border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-slate-800">Sales Summary</CardTitle>
+                <CardTitle className="text-xl font-bold text-slate-800">Today's Hourly Sales</CardTitle>
               </CardHeader>
               <CardContent>
-                {data?.salesLoading ? (
-                  <div className="flex items-center justify-center h-[300px]">
-                    <p className="text-slate-500">Loading sales data...</p>
-                  </div>
-                ) : !data?.sales.length ? (
-                  <div className="flex items-center justify-center h-[300px]">
-                    <p className="text-slate-500">No sales data available</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <p className="text-2xl font-bold text-green-600">${data.salesStats.totalRevenue.toLocaleString()}</p>
-                        <p className="text-sm text-slate-600">Total Revenue</p>
-                      </div>
-                      <div className="text-center p-4 bg-blue-50 rounded-lg">
-                        <p className="text-2xl font-bold text-blue-600">{data.salesStats.totalCustomers.toLocaleString()}</p>
-                        <p className="text-sm text-slate-600">Total Customers</p>
-                      </div>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <p className="text-2xl font-bold text-purple-600">${avgOrderValue.toFixed(2)}</p>
-                      <p className="text-sm text-slate-600">Average Order Value</p>
-                    </div>
-                  </div>
-                )}
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={hourlySalesData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="hour" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="sales" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
 
@@ -193,37 +141,27 @@ const Sales = () => {
         <TabsContent value="orders" className="space-y-6">
           <Card className="border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-slate-800">Recent Sales</CardTitle>
+              <CardTitle className="text-xl font-bold text-slate-800">Recent Orders</CardTitle>
             </CardHeader>
             <CardContent>
-              {data?.salesLoading ? (
-                <div className="flex items-center justify-center h-[200px]">
-                  <p className="text-slate-500">Loading sales data...</p>
-                </div>
-              ) : recentSales.length === 0 ? (
-                <div className="flex items-center justify-center h-[200px]">
-                  <p className="text-slate-500">No sales data available</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentSales.map((sale) => (
-                    <div key={sale.id} className="flex items-center justify-between p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <p className="font-medium text-slate-800">{sale.id}</p>
-                          <Badge className={getStatusColor(sale.status)}>{sale.status}</Badge>
-                        </div>
-                        <p className="text-sm text-slate-600">Date: {sale.date}</p>
-                        <p className="text-sm text-slate-500">{sale.customers} customers</p>
+              <div className="space-y-4">
+                {recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium text-slate-800">{order.id}</p>
+                        <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-slate-800">{sale.total}</p>
-                        <p className="text-xs text-slate-500">{sale.time}</p>
-                      </div>
+                      <p className="text-sm text-slate-600">{order.customer}</p>
+                      <p className="text-sm text-slate-500">{order.items}</p>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="text-right">
+                      <p className="font-medium text-slate-800">{order.total}</p>
+                      <p className="text-xs text-slate-500">{order.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -3,16 +3,12 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Users, DollarSign, Coffee, TrendingUp, UserPlus, Minus } from "lucide-react";
+import { Users, DollarSign, Coffee, TrendingUp, UserPlus, Plus, Minus } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
-import { useModBrew } from "../contexts/ModBrewContext";
 
 const Home = () => {
-  // Get data from context
-  const { data, refreshSales, refreshExpenses } = useModBrew();
-
   // Daily Sales state
   const [salesDate, setSalesDate] = useState(() => {
     const now = new Date();
@@ -30,10 +26,7 @@ const Home = () => {
   });
   const [expenseName, setExpenseName] = useState("");
   const [expenseItem, setExpenseItem] = useState("");
-  const [customItem, setCustomItem] = useState("");
   const [expensePrice, setExpensePrice] = useState("");
-
-  // No need for individual data fetching - context handles this
 
   const handleAddDailySales = async () => {
     const customerCountNum = parseInt(customerCount);
@@ -55,8 +48,6 @@ const Home = () => {
           toast.success('Daily sales added successfully!');
           setCustomerCount("");
           setGrossSales("");
-          // Refresh sales data after adding new sales
-          refreshSales();
         }
       } catch (error) {
         toast.error('Error adding daily sales');
@@ -69,15 +60,14 @@ const Home = () => {
 
   const handleAddExpense = async () => {
     const price = parseFloat(expensePrice);
-    const selectedItem = expenseItem === "other" ? customItem.trim() : expenseItem;
     
-    if (expenseName.trim() && selectedItem && !isNaN(price) && price > 0) {
+    if (expenseName.trim() && expenseItem.trim() && !isNaN(price) && price > 0) {
       try {
         const { error } = await supabase
           .from('expenses')
           .insert({
             purchased_at: expenseDate + 'T00:00:00Z', // Convert date to timestamp
-            item_name: `${expenseName.trim()} - ${selectedItem}`, // Combine name and item
+            item_name: `${expenseName.trim()} - ${expenseItem.trim()}`, // Combine name and item
             price: price,
             purchaser: 'will' // Default purchaser, you can modify this logic
           });
@@ -88,10 +78,7 @@ const Home = () => {
           toast.success('Expense added successfully!');
           setExpenseName("");
           setExpenseItem("");
-          setCustomItem("");
           setExpensePrice("");
-          // Refresh expenses data after adding new expense
-          refreshExpenses();
         }
       } catch (error) {
         toast.error('Error adding expense');
@@ -104,32 +91,30 @@ const Home = () => {
 
   const stats = [
     { 
-      title: "Total Revenue", 
-      value: data?.salesLoading ? "Loading..." : `$${data?.salesStats.totalRevenue.toLocaleString() || 0}`, 
-      change: "All time sales", 
+      title: "Today's Revenue", 
+      value: "$1,247", 
+      change: "+12% from yesterday", 
       icon: DollarSign, 
       color: "text-green-600" 
     },
     { 
-      title: "Total Customers", 
-      value: data?.salesLoading ? "Loading..." : (data?.salesStats.totalCustomers || 0).toLocaleString(), 
-      change: "All time customers", 
+      title: "Active Customers", 
+      value: "89", 
+      change: "+5 new today", 
       icon: Users, 
       color: "text-blue-600" 
     },
     { 
-      title: "Total Expenses", 
-      value: data?.expensesLoading ? "Loading..." : `$${data?.expenseStats.totalExpenses.toLocaleString() || 0}`, 
-      change: "All time expenses", 
+      title: "Cups Served", 
+      value: "234", 
+      change: "Peak: 2:30 PM", 
       icon: Coffee, 
       color: "text-amber-600" 
     },
     { 
       title: "Avg Order Value", 
-      value: data?.salesLoading ? "Loading..." : 
-             data?.salesStats.totalCustomers && data.salesStats.totalCustomers > 0 ? 
-             `$${data.salesStats.avgOrderValue.toFixed(2)}` : "$0.00", 
-      change: "Revenue per customer", 
+      value: "$8.50", 
+      change: "+$0.75 this week", 
       icon: TrendingUp, 
       color: "text-purple-600" 
     }
@@ -232,30 +217,13 @@ const Home = () => {
                           </div>
                           <div className="space-y-2">
                             <label className="text-sm font-medium">Item</label>
-                            <Select value={expenseItem} onValueChange={setExpenseItem}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select an item" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="milk">Milk</SelectItem>
-                                <SelectItem value="syrup">Syrup</SelectItem>
-                                <SelectItem value="cups">Cups</SelectItem>
-                                <SelectItem value="coffee">Coffee</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <Input
+                              type="text"
+                              placeholder="Enter item"
+                              value={expenseItem}
+                              onChange={(e) => setExpenseItem(e.target.value)}
+                            />
                           </div>
-                          {expenseItem === "other" && (
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Custom Item</label>
-                              <Input
-                                type="text"
-                                placeholder="Enter custom item name"
-                                value={customItem}
-                                onChange={(e) => setCustomItem(e.target.value)}
-                              />
-                            </div>
-                          )}
                           <div className="space-y-2">
                             <label className="text-sm font-medium">Price ($)</label>
                             <Input
@@ -344,6 +312,7 @@ const Home = () => {
                 <Button
                   key={action.title}
                   className={`w-full h-14 bg-gradient-to-r ${action.color} hover:shadow-lg transition-all duration-200 text-white border-0`}
+                  onClick={action.onClick}
                 >
                   <action.icon className="w-5 h-5 mr-3" />
                   {action.title}

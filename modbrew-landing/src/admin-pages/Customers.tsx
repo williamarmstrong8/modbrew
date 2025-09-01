@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Search, Plus, Mail, Phone, MapPin } from "lucide-react";
 
 const Customers = () => {
@@ -17,7 +17,7 @@ const Customers = () => {
       totalSpent: "$342.50",
       lastVisit: "2 hours ago",
       status: "VIP",
-      initials: "SJ"
+      avatar: "/placeholder-avatar1.jpg"
     },
     {
       id: 2,
@@ -29,7 +29,7 @@ const Customers = () => {
       totalSpent: "$189.75",
       lastVisit: "1 day ago",
       status: "Regular",
-      initials: "MC"
+      avatar: "/placeholder-avatar2.jpg"
     },
     {
       id: 3,
@@ -41,7 +41,7 @@ const Customers = () => {
       totalSpent: "$127.25",
       lastVisit: "3 days ago",
       status: "Regular",
-      initials: "ED"
+      avatar: "/placeholder-avatar3.jpg"
     },
     {
       id: 4,
@@ -53,7 +53,7 @@ const Customers = () => {
       totalSpent: "$67.50",
       lastVisit: "1 week ago",
       status: "New",
-      initials: "AR"
+      avatar: "/placeholder-avatar4.jpg"
     },
     {
       id: 5,
@@ -65,7 +65,7 @@ const Customers = () => {
       totalSpent: "$245.00",
       lastVisit: "4 hours ago",
       status: "VIP",
-      initials: "LW"
+      avatar: "/placeholder-avatar5.jpg"
     },
     {
       id: 6,
@@ -77,7 +77,7 @@ const Customers = () => {
       totalSpent: "$98.75",
       lastVisit: "2 days ago",
       status: "Regular",
-      initials: "DK"
+      avatar: "/placeholder-avatar6.jpg"
     }
   ];
 
@@ -156,7 +156,8 @@ const Customers = () => {
               <div key={customer.id} className="flex items-center justify-between p-6 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-12 w-12">
-                    <AvatarFallback>{customer.initials}</AvatarFallback>
+                    <AvatarImage src={customer.avatar} alt={customer.name} />
+                    <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">

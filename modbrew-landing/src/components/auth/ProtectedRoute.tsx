@@ -25,7 +25,7 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
 
   if (!requireAuth && user) {
     // Redirect authenticated users away from auth pages
-    return <Navigate to="/member-hub" replace />
+    return <Navigate to="/brewery" replace />
   }
 
   return <>{children}</>

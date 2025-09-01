@@ -24,7 +24,7 @@ const Products = () => {
       status: "In Stock",
       sales: 89,
       revenue: "$400.50",
-      emoji: "☕"
+      image: "/placeholder-coffee1.jpg"
     },
     {
       id: "COF-002",
@@ -36,7 +36,7 @@ const Products = () => {
       status: "In Stock",
       sales: 67,
       revenue: "$251.25",
-      emoji: "☕"
+      image: "/placeholder-coffee2.jpg"
     },
     {
       id: "COF-003",
@@ -48,7 +48,7 @@ const Products = () => {
       status: "In Stock",
       sales: 54,
       revenue: "$270.00",
-      emoji: "☕"
+      image: "/placeholder-coffee3.jpg"
     },
     {
       id: "COF-004",
@@ -60,7 +60,7 @@ const Products = () => {
       status: "In Stock",
       sales: 42,
       revenue: "$178.50",
-      emoji: "🧊"
+      image: "/placeholder-coffee4.jpg"
     },
     {
       id: "COF-005",
@@ -72,7 +72,7 @@ const Products = () => {
       status: "Out of Stock",
       sales: 35,
       revenue: "$87.50",
-      emoji: "☕"
+      image: "/placeholder-coffee5.jpg"
     },
     {
       id: "FOOD-001",
@@ -84,7 +84,7 @@ const Products = () => {
       status: "Low Stock",
       sales: 23,
       revenue: "$74.75",
-      emoji: "🥐"
+      image: "/placeholder-pastry1.jpg"
     },
     {
       id: "FOOD-002",
@@ -96,7 +96,7 @@ const Products = () => {
       status: "In Stock",
       sales: 31,
       revenue: "$85.25",
-      emoji: "🧁"
+      image: "/placeholder-pastry2.jpg"
     },
     {
       id: "FOOD-003",
@@ -108,7 +108,7 @@ const Products = () => {
       status: "Low Stock",
       sales: 19,
       revenue: "$66.50",
-      emoji: "🥯"
+      image: "/placeholder-pastry3.jpg"
     }
   ];
 

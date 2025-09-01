@@ -68,8 +68,8 @@ export function AuthForm({ onModeChange, initialMode = 'signin' }: AuthFormProps
         // Note: Profile and membership are created automatically by the database trigger
         // when a new user signs up, so we don't need to manually insert them here
 
-        // Navigate to member hub after successful signup
-        navigate('/member-hub')
+        // Navigate to brewery after successful signup
+        navigate('/brewery')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -78,7 +78,7 @@ export function AuthForm({ onModeChange, initialMode = 'signin' }: AuthFormProps
         
         if (error) throw error
         
-        navigate('/member-hub')
+        navigate('/brewery')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')

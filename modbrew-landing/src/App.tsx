@@ -3,7 +3,6 @@ import { TooltipProvider } from './components/ui/tooltip'
 import { SidebarProvider } from './components/ui/sidebar'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './contexts/AuthContext'
-import { ModBrewProvider } from './contexts/ModBrewContext'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { AuthPage } from './components/auth/AuthPage'
 import LandingPage from './pages/LandingPage'
@@ -31,18 +30,16 @@ function App() {
               <AuthPage />
             </ProtectedRoute>
           } />
-          <Route path="/member-hub" element={
+          <Route path="/brewery" element={
             <ProtectedRoute requireAuth={true}>
               <MemberHub />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={
             <ProtectedRoute requireAuth={true}>
-              <ModBrewProvider>
-                <SidebarProvider>
-                  <DashboardLayout />
-                </SidebarProvider>
-              </ModBrewProvider>
+              <SidebarProvider>
+                <DashboardLayout />
+              </SidebarProvider>
             </ProtectedRoute>
           }>
             <Route index element={<Home />} />

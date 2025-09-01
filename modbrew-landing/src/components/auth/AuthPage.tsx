@@ -13,7 +13,7 @@ export function AuthPage() {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate('/member-hub')
+        navigate('/brewery')
       }
       setIsLoading(false)
     })

@@ -4,43 +4,13 @@ import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Receipt, TrendingDown, AlertTriangle, Plus, CreditCard, Building } from "lucide-react";
-import { useModBrew } from "../contexts/ModBrewContext";
 
 const Expenses = () => {
-  // Get data from context
-  const { data } = useModBrew();
-
-  // No need for individual data fetching - context handles this
-
   const expenseStats = [
-    { 
-      title: "Total Expenses", 
-      value: data?.expensesLoading ? "Loading..." : `$${data?.expenseStats.totalExpenses.toLocaleString() || 0}`, 
-      change: "All time expenses", 
-      icon: Receipt, 
-      color: "text-red-600" 
-    },
-    { 
-      title: "This Month", 
-      value: data?.expensesLoading ? "Loading..." : `$${data?.expenseStats.monthlyExpenses.toLocaleString() || 0}`, 
-      change: "Current month expenses", 
-      icon: TrendingDown, 
-      color: "text-green-600" 
-    },
-    { 
-      title: "This Week", 
-      value: data?.expensesLoading ? "Loading..." : `$${data?.expenseStats.weeklyExpenses.toLocaleString() || 0}`, 
-      change: "Last 7 days expenses", 
-      icon: AlertTriangle, 
-      color: "text-orange-600" 
-    },
-    { 
-      title: "Avg Daily Cost", 
-      value: data?.expensesLoading ? "Loading..." : `$${data?.expenseStats.avgDailyExpenses.toFixed(2) || "0.00"}`, 
-      change: "Average per day", 
-      icon: Building, 
-      color: "text-blue-600" 
-    }
+    { title: "Total Expenses", value: "$2,847", change: "+5% from last month", icon: Receipt, color: "text-red-600" },
+    { title: "This Month", value: "$1,234", change: "-$120 from last month", icon: TrendingDown, color: "text-green-600" },
+    { title: "Pending Bills", value: "$456", change: "3 bills due soon", icon: AlertTriangle, color: "text-orange-600" },
+    { title: "Avg Daily Cost", value: "$41", change: "-$3 this week", icon: Building, color: "text-blue-600" }
   ];
 
   const expenseCategories = [
@@ -60,29 +30,14 @@ const Expenses = () => {
     { month: "Jun", amount: 2347, budget: 2500 }
   ];
 
-  // Generate recent expenses from actual data
-  const getRecentExpenses = () => {
-    if (!data?.expenses.length) return [];
-    
-    return data.expenses.slice(0, 6).map((expense, index) => {
-      const date = new Date(expense.purchased_at);
-      const timeAgo = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
-      const timeText = timeAgo === 0 ? "Today" : timeAgo === 1 ? "Yesterday" : `${timeAgo} days ago`;
-      
-      return {
-        id: `EXP-${String(index + 1).padStart(3, '0')}`,
-        description: expense.item_name,
-        amount: `$${(expense.price || 0).toFixed(2)}`,
-        category: "General", // Since we don't have categories in our current schema
-        date: expense.purchased_at.split('T')[0],
-        status: "Paid",
-        purchaser: expense.purchaser,
-        time: timeText
-      };
-    });
-  };
-
-  const recentExpenses = getRecentExpenses();
+  const recentExpenses = [
+    { id: "EXP-001", description: "Coffee beans - Premium blend", amount: "$245.00", category: "Supplies", date: "2024-01-15", status: "Paid", vendor: "Bean Supply Co." },
+    { id: "EXP-002", description: "Monthly rent payment", amount: "$1,200.00", category: "Rent", date: "2024-01-01", status: "Paid", vendor: "Property Management" },
+    { id: "EXP-003", description: "Electricity bill", amount: "$156.75", category: "Utilities", date: "2024-01-10", status: "Paid", vendor: "City Electric" },
+    { id: "EXP-004", description: "Espresso machine maintenance", amount: "$89.50", category: "Equipment", date: "2024-01-12", status: "Paid", vendor: "Coffee Tech Services" },
+    { id: "EXP-005", description: "Social media advertising", amount: "$125.00", category: "Marketing", date: "2024-01-14", status: "Pending", vendor: "Meta Ads" },
+    { id: "EXP-006", description: "Milk and cream delivery", amount: "$78.25", category: "Supplies", date: "2024-01-16", status: "Paid", vendor: "Dairy Direct" }
+  ];
 
   const upcomingBills = [
     { description: "Internet service", amount: "$89.99", dueDate: "Jan 20, 2024", category: "Utilities" },
@@ -218,35 +173,24 @@ const Expenses = () => {
               <CardTitle className="text-xl font-bold text-slate-800">Recent Expenses</CardTitle>
             </CardHeader>
             <CardContent>
-              {data?.expensesLoading ? (
-                <div className="flex items-center justify-center h-[200px]">
-                  <p className="text-slate-500">Loading expenses data...</p>
-                </div>
-              ) : recentExpenses.length === 0 ? (
-                <div className="flex items-center justify-center h-[200px]">
-                  <p className="text-slate-500">No expenses data available</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentExpenses.map((expense) => (
-                    <div key={expense.id} className="flex items-center justify-between p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <p className="font-medium text-slate-800">{expense.id}</p>
-                          <Badge className={getStatusColor(expense.status)}>{expense.status}</Badge>
-                          <Badge className={getCategoryColor(expense.category)}>{expense.category}</Badge>
-                        </div>
-                        <p className="text-sm text-slate-600">{expense.description}</p>
-                        <p className="text-sm text-slate-500">Purchased by: {expense.purchaser} • {expense.date}</p>
+              <div className="space-y-4">
+                {recentExpenses.map((expense) => (
+                  <div key={expense.id} className="flex items-center justify-between p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium text-slate-800">{expense.id}</p>
+                        <Badge className={getStatusColor(expense.status)}>{expense.status}</Badge>
+                        <Badge className={getCategoryColor(expense.category)}>{expense.category}</Badge>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-slate-800">{expense.amount}</p>
-                        <p className="text-xs text-slate-500">{expense.time}</p>
-                      </div>
+                      <p className="text-sm text-slate-600">{expense.description}</p>
+                      <p className="text-sm text-slate-500">{expense.vendor} • {expense.date}</p>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="text-right">
+                      <p className="font-medium text-slate-800">{expense.amount}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
