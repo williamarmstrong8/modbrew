@@ -8,6 +8,7 @@ import { AuthPage } from './components/auth/AuthPage'
 import LandingPage from './pages/LandingPage'
 import GalleryPage from './pages/GalleryPage'
 import MemberHub from './pages/MemberHub'
+import BrowseCoffee from './pages/BrowseCoffee'
 import DashboardLayout from './components/layout/DashboardLayout'
 import Home from './admin-pages/Home'
 import Customers from './admin-pages/Customers'
@@ -33,6 +34,11 @@ function App() {
           <Route path="/brewery" element={
             <ProtectedRoute requireAuth={true}>
               <MemberHub />
+            </ProtectedRoute>
+          } />
+          <Route path="/coffee" element={
+            <ProtectedRoute requireAuth={true}>
+              <BrowseCoffee />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={

@@ -2,8 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Users, DollarSign, Coffee, TrendingUp, UserPlus, Plus, Minus } from "lucide-react";
+import { Users, DollarSign, Coffee, TrendingUp, UserPlus, Minus } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
@@ -312,7 +311,6 @@ const Home = () => {
                 <Button
                   key={action.title}
                   className={`w-full h-14 bg-gradient-to-r ${action.color} hover:shadow-lg transition-all duration-200 text-white border-0`}
-                  onClick={action.onClick}
                 >
                   <action.icon className="w-5 h-5 mr-3" />
                   {action.title}

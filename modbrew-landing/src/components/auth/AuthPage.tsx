@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { AuthForm } from './AuthForm'
+import { motion } from 'framer-motion'
 
 export function AuthPage() {
   const navigate = useNavigate()
@@ -37,31 +38,75 @@ export function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 bg-black">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <img
+    <div className="min-h-screen relative flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
+      {/* Background Image */}
+      <img 
+        src="/images/Signup Background.JPG"
+        alt="Background"
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => {
+          console.error('Failed to load background image:', e);
+          // Fallback to a different image or color
+          e.currentTarget.style.display = 'none';
+        }}
+      />
+      
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      
+      {/* Content */}
+      <motion.div 
+        className="relative z-10 w-full max-w-md space-y-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <motion.img
             src="/images/Mod Brew Long.png"
             alt="ModBrew"
-            className="mx-auto h-16 w-auto mb-6"
+            className="mx-auto h-20 w-auto mb-8"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
           />
-          <h2 className="text-3xl font-bold tracking-tight text-white">
+          <motion.h2 
+            className="text-4xl font-light tracking-wide text-white mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             {authMode === 'signin' ? 'Welcome back' : 'Join ModBrew'}
-          </h2>
-          <p className="mt-2 text-sm text-gray-400">
+          </motion.h2>
+          <motion.p 
+            className="text-lg text-white/80 font-light"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
             {authMode === 'signin' 
               ? 'Login to access your account'
               : 'Create an account to get started'}
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
-        <div className="bg-white rounded-lg p-8 shadow-lg">
+        <motion.div 
+          className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white/20"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+        >
           <AuthForm
             onModeChange={setAuthMode}
             initialMode={authMode}
           />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   )
 }
