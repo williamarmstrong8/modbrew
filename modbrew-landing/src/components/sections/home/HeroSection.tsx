@@ -34,7 +34,7 @@ export default function HeroSection() {
             <motion.img 
               src="/images/Mod Brew Long.png" 
               alt="ModBrew" 
-              className="w-96 sm:w-[28rem] md:w-[32rem] lg:w-[40rem] xl:w-[48rem] mx-auto mb-6 opacity-100"
+              className="w-64 sm:w-96 md:w-[32rem] lg:w-[40rem] xl:w-[48rem] mx-auto mb-6 opacity-100"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, ease: "easeOut", delay: 0.7 }}

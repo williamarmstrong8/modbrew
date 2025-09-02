@@ -1,5 +1,12 @@
 # Weekly Challenge Setup Guide
 
+## ⚠️ IMPORTANT: Database Structure Update Required
+
+**Before setting up weekly challenges, you must run the database structure update first:**
+
+1. Run `update-database-structure.sql` to migrate from profiles table to memberships table
+2. Then run `fix-weekly-challenges-table.sql` to fix the weekly_challenges table foreign key
+
 ## 1. Database Setup
 
 Run the following SQL in your Supabase SQL editor:
@@ -8,7 +15,7 @@ Run the following SQL in your Supabase SQL editor:
 -- Create weekly_challenges table
 CREATE TABLE IF NOT EXISTS weekly_challenges (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES memberships(user_id) ON DELETE CASCADE,
   challenge_name TEXT DEFAULT 'Weekly Photo Challenge',
   status TEXT DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'submitted')),
   photo_urls TEXT[] DEFAULT '{}',

@@ -11,6 +11,7 @@ import MemberHub from './pages/MemberHub'
 import WeeklyChallenge from './pages/WeeklyChallenge'
 import ChallengeSubmissions from './pages/ChallengeSubmissions'
 import BrowseCoffee from './pages/BrowseCoffee'
+import AccountSettings from './pages/AccountSettings'
 import DashboardLayout from './components/layout/DashboardLayout'
 import Home from './admin-pages/Home'
 import Customers from './admin-pages/Customers'
@@ -36,6 +37,11 @@ function App() {
           <Route path="/brewery" element={
             <ProtectedRoute requireAuth={true}>
               <MemberHub />
+            </ProtectedRoute>
+          } />
+          <Route path="/brewery/account" element={
+            <ProtectedRoute requireAuth={true}>
+              <AccountSettings />
             </ProtectedRoute>
           } />
           <Route path="/weekly-challenge" element={
