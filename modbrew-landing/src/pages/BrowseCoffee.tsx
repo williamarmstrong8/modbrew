@@ -9,15 +9,7 @@ import {
   ArrowLeft, 
   Coffee, 
   Star, 
-  X,
-  Search,
-  Clock,
-  MapPin,
-  Phone,
-  Leaf,
-  Thermometer,
-  Droplets,
-  Zap
+  X
 } from 'lucide-react'
 
 interface CoffeeItem {
@@ -26,7 +18,7 @@ interface CoffeeItem {
   description: string
   shortDescription: string
   price: number
-  category: 'espresso' | 'filter' | 'cold' | 'specialty'
+  category: 'espresso' | 'filter' | 'cold' | 'specialty' | 'iced'
   origin: string
   roast: 'light' | 'medium' | 'dark'
   rating: number
@@ -47,209 +39,120 @@ interface CoffeeItem {
 const coffeeMenu: CoffeeItem[] = [
   {
     id: '1',
-    name: 'Ethiopian Yirgacheffe',
-    description: 'Bright, floral notes with hints of jasmine and citrus. A light roast that showcases the natural sweetness of Ethiopian beans.',
-    shortDescription: 'Bright, floral notes with hints of jasmine and citrus.',
-    price: 18.50,
-    category: 'filter',
-    origin: 'Ethiopia',
-    roast: 'light',
+    name: 'Iced Honey Cinnamon Latte',
+    description: 'A perfectly balanced iced latte featuring the natural sweetness of honey and warm notes of cinnamon. Made with premium Blank Street coffee beans and creamy oat milk for a smooth, dairy-free experience.',
+    shortDescription: 'Sweet honey and warm cinnamon in a smooth iced latte.',
+    price: 6.50,
+    category: 'iced',
+    origin: 'Blank Street Coffee',
+    roast: 'medium',
     rating: 4.8,
     isPopular: true,
-    image: '/images/coffee-ethiopian.jpg',
-    altitude: '1,750 - 2,200m',
-    process: 'Washed',
-    tastingNotes: ['Jasmine', 'Citrus', 'Bergamot', 'Honey'],
-    caffeine: 'Medium-High',
-    acidity: 'Bright',
-    body: 'Light-Medium',
-    ingredients: ['100% Arabica Beans', 'Ethiopian Yirgacheffe'],
-    brewingMethod: 'Pour-over, French Press, Aeropress',
-    story: 'Grown in the highlands of Ethiopia, this coffee is known for its distinctive floral and citrus notes. The Yirgacheffe region produces some of the world\'s most unique and sought-after coffees.'
+    image: '/images/coffee-iced-honey-cinnamon.jpg',
+    altitude: 'N/A',
+    process: 'Espresso',
+    tastingNotes: ['Honey', 'Cinnamon', 'Smooth', 'Sweet'],
+    caffeine: 'Medium',
+    acidity: 'Low',
+    body: 'Medium',
+    ingredients: ['Blank Street Coffee Beans', 'Oat Milk', 'Honey', 'Cinnamon'],
+    brewingMethod: 'Espresso over ice with oat milk',
+    story: 'Our signature iced honey cinnamon latte combines the rich, smooth flavor of Blank Street coffee with the natural sweetness of honey and the comforting warmth of cinnamon. Perfect for any time of day.'
   },
   {
     id: '2',
-    name: 'Colombian Supremo',
-    description: 'Rich, balanced flavor with notes of caramel and chocolate. Medium roast with a smooth, full-bodied finish.',
-    shortDescription: 'Rich, balanced flavor with notes of caramel and chocolate.',
-    price: 16.99,
-    category: 'espresso',
-    origin: 'Colombia',
+    name: 'Iced Maple Latte',
+    description: 'A delightful iced latte featuring the rich, caramel-like sweetness of pure maple syrup. Made with premium Blank Street coffee beans and creamy oat milk for a smooth, dairy-free experience.',
+    shortDescription: 'Rich maple sweetness in a smooth iced latte.',
+    price: 6.50,
+    category: 'iced',
+    origin: 'Blank Street Coffee',
     roast: 'medium',
-    rating: 4.6,
-    image: '/images/coffee-colombian.jpg',
-    altitude: '1,200 - 2,000m',
-    process: 'Washed',
-    tastingNotes: ['Caramel', 'Chocolate', 'Nuts', 'Red Apple'],
+    rating: 4.7,
+    image: '/images/coffee-iced-maple.jpg',
+    altitude: 'N/A',
+    process: 'Espresso',
+    tastingNotes: ['Maple', 'Caramel', 'Smooth', 'Sweet'],
     caffeine: 'Medium',
-    acidity: 'Balanced',
-    body: 'Full',
-    ingredients: ['100% Arabica Beans', 'Colombian Supremo'],
-    brewingMethod: 'Espresso, Moka Pot, Drip Coffee',
-    story: 'Colombian Supremo represents the highest grade of Colombian coffee, known for its consistent quality and balanced flavor profile that works beautifully in espresso.'
+    acidity: 'Low',
+    body: 'Medium',
+    ingredients: ['Blank Street Coffee Beans', 'Oat Milk', 'Pure Maple Syrup'],
+    brewingMethod: 'Espresso over ice with oat milk',
+    story: 'Experience the authentic taste of pure maple syrup in our iced maple latte. The rich, natural sweetness of maple perfectly complements the smooth, balanced flavor of Blank Street coffee.'
   },
   {
     id: '3',
-    name: 'Sumatra Mandheling',
-    description: 'Deep, earthy tones with hints of cedar and spice. Dark roast with low acidity and a heavy body.',
-    shortDescription: 'Deep, earthy tones with hints of cedar and spice.',
-    price: 17.50,
-    category: 'espresso',
-    origin: 'Indonesia',
-    roast: 'dark',
-    rating: 4.7,
-    image: '/images/coffee-sumatra.jpg',
-    altitude: '1,100 - 1,500m',
-    process: 'Semi-washed',
-    tastingNotes: ['Cedar', 'Spice', 'Earth', 'Dark Chocolate'],
-    caffeine: 'Medium-Low',
+    name: 'Iced Vanilla Latte',
+    description: 'A classic iced latte featuring the smooth, sweet flavor of vanilla. Made with premium Blank Street coffee beans and creamy oat milk for a smooth, dairy-free experience.',
+    shortDescription: 'Classic vanilla sweetness in a smooth iced latte.',
+    price: 6.00,
+    category: 'iced',
+    origin: 'Blank Street Coffee',
+    roast: 'medium',
+    rating: 4.6,
+    image: '/images/coffee-iced-vanilla.jpg',
+    altitude: 'N/A',
+    process: 'Espresso',
+    tastingNotes: ['Vanilla', 'Smooth', 'Sweet', 'Creamy'],
+    caffeine: 'Medium',
     acidity: 'Low',
-    body: 'Heavy',
-    ingredients: ['100% Arabica Beans', 'Sumatra Mandheling'],
-    brewingMethod: 'Espresso, French Press, Cold Brew',
-    story: 'This Indonesian coffee is known for its unique processing method and distinctive earthy flavor profile, making it perfect for those who prefer bold, full-bodied coffees.'
+    body: 'Medium',
+    ingredients: ['Blank Street Coffee Beans', 'Oat Milk', 'Vanilla Syrup'],
+    brewingMethod: 'Espresso over ice with oat milk',
+    story: 'Our iced vanilla latte is a timeless favorite, featuring the smooth, sweet flavor of vanilla that perfectly complements the rich, balanced taste of Blank Street coffee.'
   },
   {
     id: '4',
-    name: 'Guatemala Antigua',
-    description: 'Complex flavor profile with notes of cocoa, spice, and a hint of smoke. Medium-dark roast with excellent balance.',
-    shortDescription: 'Complex flavor profile with notes of cocoa, spice, and a hint of smoke.',
-    price: 19.99,
-    category: 'filter',
-    origin: 'Guatemala',
-    roast: 'medium',
-    rating: 4.9,
-    isNew: true,
-    image: '/images/coffee-guatemala.jpg',
-    altitude: '1,500 - 1,700m',
-    process: 'Washed',
-    tastingNotes: ['Cocoa', 'Spice', 'Smoke', 'Tobacco'],
-    caffeine: 'Medium',
-    acidity: 'Medium',
-    body: 'Medium-Full',
-    ingredients: ['100% Arabica Beans', 'Guatemala Antigua'],
-    brewingMethod: 'Pour-over, Chemex, V60',
-    story: 'Grown in the volcanic soil of the Antigua Valley, this coffee develops a unique complexity from the region\'s rich minerals and climate.'
-  },
-  {
-    id: '5',
-    name: 'Cold Brew Blend',
-    description: 'Smooth, low-acid cold brew with notes of chocolate and nuts. Perfect for hot summer days.',
-    shortDescription: 'Smooth, low-acid cold brew with notes of chocolate and nuts.',
-    price: 22.50,
-    category: 'cold',
-    origin: 'Blend',
-    roast: 'medium',
-    rating: 4.5,
-    image: '/images/coffee-cold-brew.jpg',
-    altitude: 'Various',
-    process: 'Blend',
-    tastingNotes: ['Chocolate', 'Nuts', 'Vanilla', 'Caramel'],
-    caffeine: 'High',
-    acidity: 'Low',
-    body: 'Medium',
-    ingredients: ['Arabica Beans', 'Robusta Beans', 'Natural Flavors'],
-    brewingMethod: 'Cold Brew, Iced Coffee',
-    story: 'Our signature cold brew blend is specially crafted to extract the best flavors during the cold brewing process, resulting in a smooth, refreshing coffee experience.'
-  },
-  {
-    id: '6',
-    name: 'Blue Mountain Jamaica',
-    description: 'Premium coffee with mild flavor and bright acidity. Known for its smooth, balanced profile.',
-    shortDescription: 'Premium coffee with mild flavor and bright acidity.',
-    price: 45.00,
-    category: 'specialty',
-    origin: 'Jamaica',
+    name: 'Iced Pumpkin Spice Latte',
+    description: 'A seasonal favorite featuring the warm, aromatic spices of fall. Made with premium Blank Street coffee beans and creamy oat milk for a smooth, dairy-free experience.',
+    shortDescription: 'Warm pumpkin spice in a smooth iced latte.',
+    price: 6.75,
+    category: 'iced',
+    origin: 'Blank Street Coffee',
     roast: 'medium',
     rating: 4.9,
     isPopular: true,
-    image: '/images/coffee-blue-mountain.jpg',
-    altitude: '3,000 - 5,500ft',
-    process: 'Washed',
-    tastingNotes: ['Mild', 'Bright', 'Clean', 'Sweet'],
-    caffeine: 'Medium',
-    acidity: 'Bright',
-    body: 'Medium',
-    ingredients: ['100% Arabica Beans', 'Jamaica Blue Mountain'],
-    brewingMethod: 'Pour-over, French Press, Espresso',
-    story: 'One of the world\'s most prestigious coffees, Blue Mountain Jamaica is grown in the misty peaks of the Blue Mountains, producing a coffee of exceptional quality and rarity.'
-  },
-  {
-    id: '7',
-    name: 'Brazil Santos',
-    description: 'Nutty, sweet flavor with low acidity. Perfect for espresso blends and dark roasts.',
-    shortDescription: 'Nutty, sweet flavor with low acidity.',
-    price: 15.99,
-    category: 'espresso',
-    origin: 'Brazil',
-    roast: 'dark',
-    rating: 4.4,
-    image: '/images/coffee-brazil.jpg',
-    altitude: '800 - 1,600m',
-    process: 'Natural',
-    tastingNotes: ['Nuts', 'Sweet', 'Chocolate', 'Caramel'],
+    image: '/images/coffee-iced-pumpkin.jpg',
+    altitude: 'N/A',
+    process: 'Espresso',
+    tastingNotes: ['Pumpkin', 'Cinnamon', 'Nutmeg', 'Cloves'],
     caffeine: 'Medium',
     acidity: 'Low',
-    body: 'Full',
-    ingredients: ['100% Arabica Beans', 'Brazil Santos'],
-    brewingMethod: 'Espresso, Moka Pot, Drip Coffee',
-    story: 'Brazil Santos is the foundation of many espresso blends, providing a solid base with its nutty sweetness and low acidity.'
+    body: 'Medium',
+    ingredients: ['Blank Street Coffee Beans', 'Oat Milk', 'Pumpkin Spice Syrup'],
+    brewingMethod: 'Espresso over ice with oat milk',
+    story: 'Embrace the flavors of fall with our iced pumpkin spice latte. The warm, aromatic blend of pumpkin and spices creates the perfect seasonal treat, made with our signature Blank Street coffee.'
   },
   {
-    id: '8',
-    name: 'Kenya AA',
-    description: 'Bright, wine-like acidity with notes of black currant and tomato. Complex and full-bodied.',
-    shortDescription: 'Bright, wine-like acidity with notes of black currant and tomato.',
-    price: 24.99,
-    category: 'filter',
-    origin: 'Kenya',
-    roast: 'light',
+    id: '5',
+    name: 'Cold Brew',
+    description: 'High-caffeine espresso pulled coffee, brewed cold for a smooth, bold flavor. Perfect for those who need an extra boost of energy with a smooth, low-acid profile.',
+    shortDescription: 'High-caffeine cold brew with bold, smooth flavor.',
+    price: 5.50,
+    category: 'cold',
+    origin: 'Espresso Blend',
+    roast: 'dark',
     rating: 4.8,
-    isNew: true,
-    image: '/images/coffee-kenya.jpg',
-    altitude: '1,400 - 2,000m',
-    process: 'Washed',
-    tastingNotes: ['Black Currant', 'Tomato', 'Wine', 'Citrus'],
-    caffeine: 'High',
-    acidity: 'Bright',
+    image: '/images/coffee-cold-brew.jpg',
+    altitude: 'N/A',
+    process: 'Cold Brew',
+    tastingNotes: ['Bold', 'Smooth', 'Low Acid', 'Strong'],
+    caffeine: 'Very High',
+    acidity: 'Very Low',
     body: 'Full',
-    ingredients: ['100% Arabica Beans', 'Kenya AA'],
-    brewingMethod: 'Pour-over, Chemex, V60',
-    story: 'Kenya AA represents the highest grade of Kenyan coffee, known for its distinctive wine-like acidity and complex flavor profile that coffee connoisseurs love.'
+    ingredients: ['Premium Espresso Beans'],
+    brewingMethod: 'Cold brewed for 18-24 hours',
+    story: 'Our signature cold brew is made from high-caffeine espresso beans, cold brewed for 18-24 hours to extract maximum flavor with minimal acidity. Perfect for those who need an extra boost of energy.'
   }
 ]
 
-const categories = [
-  { id: 'all', name: 'All Coffees', icon: Coffee },
-  { id: 'espresso', name: 'Espresso', icon: Coffee },
-  { id: 'filter', name: 'Filter', icon: Coffee },
-  { id: 'cold', name: 'Cold Brew', icon: Coffee },
-  { id: 'specialty', name: 'Specialty', icon: Coffee }
-]
 
-const roastLevels = [
-  { id: 'all', name: 'All Roasts', color: 'bg-gray-500' },
-  { id: 'light', name: 'Light', color: 'bg-amber-300' },
-  { id: 'medium', name: 'Medium', color: 'bg-amber-600' },
-  { id: 'dark', name: 'Dark', color: 'bg-amber-900' }
-]
 
 export default function BrowseCoffee() {
   const navigate = useNavigate()
-  const [selectedCategory, setSelectedCategory] = useState('all')
-  const [selectedRoast, setSelectedRoast] = useState('all')
-  const [searchQuery, setSearchQuery] = useState('')
   const [selectedCoffee, setSelectedCoffee] = useState<CoffeeItem | null>(null)
 
-  const filteredCoffees = coffeeMenu.filter(coffee => {
-    const matchesCategory = selectedCategory === 'all' || coffee.category === selectedCategory
-    const matchesRoast = selectedRoast === 'all' || coffee.roast === selectedRoast
-    const matchesSearch = coffee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         coffee.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         coffee.origin.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    return matchesCategory && matchesRoast && matchesSearch
-  })
+  const allCoffees = coffeeMenu
 
   const getRoastColor = (roast: string) => {
     switch (roast) {
@@ -260,15 +163,7 @@ export default function BrowseCoffee() {
     }
   }
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'espresso': return '☕'
-      case 'filter': return '🫖'
-      case 'cold': return '🧊'
-      case 'specialty': return '⭐'
-      default: return '☕'
-    }
-  }
+
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
@@ -311,12 +206,14 @@ export default function BrowseCoffee() {
         <AnimatePresence>
           {/* Hero Section */}
           <motion.div 
+            key="hero-section"
             className="text-center mb-12"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
             <motion.div
+              key="hero-icon"
               className="mb-6"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -325,6 +222,7 @@ export default function BrowseCoffee() {
               <Coffee className="h-20 w-20 mx-auto text-white/40 mb-4" />
             </motion.div>
             <motion.h1 
+              key="hero-title"
               className="text-5xl font-light tracking-wide mb-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -333,88 +231,30 @@ export default function BrowseCoffee() {
               Coffee Gallery
             </motion.h1>
             <motion.p 
+              key="hero-description"
               className="text-xl text-white/60 font-light max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              Explore our curated collection of premium coffee beans. Click on any coffee to discover its story, 
-              tasting notes, and brewing recommendations.
+              Explore our curated collection of premium iced lattes and cold brew drinks. Click on any drink to discover its story, 
+              tasting notes, and ingredients.
             </motion.p>
           </motion.div>
 
-          {/* Search and Filters */}
+
+
+          {/* Coffee Gallery Grid */}
           <motion.div
-            className="mb-8"
+            key="coffee-gallery-grid"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
-            <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
-              {/* Search Bar */}
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/40" />
-                <input
-                  type="text"
-                  placeholder="Search coffees, origins, or flavors..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/40 focus:bg-white/20 focus:border-white/40 transition-all duration-200"
-                />
-              </div>
-
-              {/* Category Filters */}
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <Button
-                    key={category.id}
-                    variant={selectedCategory === category.id ? "default" : "outline"}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`${
-                      selectedCategory === category.id 
-                        ? 'bg-white text-black hover:bg-white/90' 
-                        : 'border-white/20 text-white hover:bg-white/10'
-                    } transition-all duration-200`}
-                  >
-                    <span className="mr-2">{getCategoryIcon(category.id)}</span>
-                    {category.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Roast Level Filters */}
-            <div className="mt-6 flex flex-wrap gap-2">
-              {roastLevels.map((roast) => (
-                <Button
-                  key={roast.id}
-                  variant={selectedRoast === roast.id ? "default" : "outline"}
-                  onClick={() => setSelectedRoast(roast.id)}
-                  className={`${
-                    selectedRoast === roast.id 
-                      ? 'bg-white text-black hover:bg-white/90' 
-                      : 'border-white/20 text-white hover:bg-white/10'
-                  } transition-all duration-200`}
-                >
-                  {roast.id !== 'all' && (
-                    <div className={`w-3 h-3 rounded-full mr-2 ${roast.color}`} />
-                  )}
-                  {roast.name}
-                </Button>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Coffee Gallery Grid */}
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            {filteredCoffees.map((coffee, index) => (
+            {allCoffees.map((coffee, index) => (
               <motion.div
-                key={coffee.id}
+                key={`coffee-${coffee.id}-${index}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.7 + index * 0.1 }}
@@ -484,10 +324,11 @@ export default function BrowseCoffee() {
 
           {/* Contact Section */}
           <motion.div
+            key="contact-section"
             className="mt-16 text-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
           >
             <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
               <CardContent className="p-8">
@@ -498,15 +339,12 @@ export default function BrowseCoffee() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <div className="flex items-center space-x-2 text-white/80">
-                    <MapPin className="h-4 w-4" />
                     <span>Visit our cafe</span>
                   </div>
                   <div className="flex items-center space-x-2 text-white/80">
-                    <Phone className="h-4 w-4" />
                     <span>Call (555) 123-4567</span>
                   </div>
                   <div className="flex items-center space-x-2 text-white/80">
-                    <Clock className="h-4 w-4" />
                     <span>Open daily 7AM-7PM</span>
                   </div>
                 </div>
@@ -572,21 +410,18 @@ export default function BrowseCoffee() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-white/5 rounded-lg p-4">
                         <div className="flex items-center space-x-2 mb-2">
-                          <MapPin className="h-4 w-4 text-blue-400" />
                           <span className="text-white/60 text-sm">Origin</span>
                         </div>
                         <p className="text-white font-medium">{selectedCoffee.origin}</p>
                       </div>
                       <div className="bg-white/5 rounded-lg p-4">
                         <div className="flex items-center space-x-2 mb-2">
-                          <Thermometer className="h-4 w-4 text-orange-400" />
                           <span className="text-white/60 text-sm">Altitude</span>
                         </div>
                         <p className="text-white font-medium">{selectedCoffee.altitude}</p>
                       </div>
                       <div className="bg-white/5 rounded-lg p-4">
                         <div className="flex items-center space-x-2 mb-2">
-                          <Leaf className="h-4 w-4 text-green-400" />
                           <span className="text-white/60 text-sm">Process</span>
                         </div>
                         <p className="text-white font-medium">{selectedCoffee.process}</p>
@@ -605,27 +440,25 @@ export default function BrowseCoffee() {
                 {/* Tasting Notes */}
                 <div>
                   <h3 className="text-xl font-medium text-white mb-4">Tasting Notes</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedCoffee.tastingNotes.map((note, index) => (
-                      <Badge key={index} className="bg-white/10 text-white border-white/20">
-                        {note}
-                      </Badge>
-                    ))}
-                  </div>
+                                      <div className="flex flex-wrap gap-2">
+                      {selectedCoffee.tastingNotes.map((note, index) => (
+                        <Badge key={`${selectedCoffee.id}-note-${index}`} className="bg-white/10 text-white border-white/20">
+                          {note}
+                        </Badge>
+                      ))}
+                    </div>
                 </div>
 
                 {/* Coffee Characteristics */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-white/5 rounded-lg p-4">
                     <div className="flex items-center space-x-2 mb-2">
-                      <Zap className="h-4 w-4 text-yellow-400" />
                       <span className="text-white/60 text-sm">Caffeine</span>
                     </div>
                     <p className="text-white font-medium">{selectedCoffee.caffeine}</p>
                   </div>
                   <div className="bg-white/5 rounded-lg p-4">
                     <div className="flex items-center space-x-2 mb-2">
-                      <Droplets className="h-4 w-4 text-blue-400" />
                       <span className="text-white/60 text-sm">Acidity</span>
                     </div>
                     <p className="text-white font-medium">{selectedCoffee.acidity}</p>

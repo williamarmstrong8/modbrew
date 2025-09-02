@@ -58,25 +58,21 @@ export default function MemberHub() {
           return
         }
 
-        // Fetch weekly challenge status
+        // Fetch weekly challenge status using raw SQL to avoid query builder issues
         const { data: challengeData, error: challengeError } = await supabase
-          .from('weekly_challenges')
-          .select('status')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
+          .rpc('get_user_challenge_status', { user_uuid: user.id })
 
-        if (challengeError && challengeError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        if (challengeError) {
           console.error('Error fetching challenge status:', challengeError)
         }
 
         // Determine challenge status
         let status: 'not_started' | 'in_progress' | 'completed' = 'not_started'
-        if (challengeData) {
-          if (challengeData.status === 'completed') {
+        if (challengeData && challengeData.length > 0) {
+          const challenge = challengeData[0]
+          if (challenge.status === 'completed') {
             status = 'completed'
-          } else if (challengeData.status === 'in_progress') {
+          } else if (challenge.status === 'in_progress') {
             status = 'in_progress'
           }
         }
@@ -98,23 +94,19 @@ export default function MemberHub() {
 
     try {
       const { data: challengeData, error: challengeError } = await supabase
-        .from('weekly_challenges')
-        .select('status, submitted_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
+        .rpc('get_user_challenge_status', { user_uuid: user.id })
 
-      if (challengeError && challengeError.code !== 'PGRST116') {
+      if (challengeError) {
         console.error('Error fetching challenge status:', challengeError)
         return
       }
 
       let status: 'not_started' | 'in_progress' | 'completed' = 'not_started'
-      if (challengeData) {
-        if (challengeData.status === 'completed') {
+      if (challengeData && challengeData.length > 0) {
+        const challenge = challengeData[0]
+        if (challenge.status === 'completed') {
           status = 'completed'
-        } else if (challengeData.status === 'in_progress') {
+        } else if (challenge.status === 'in_progress') {
           status = 'in_progress'
         }
       }
@@ -125,7 +117,7 @@ export default function MemberHub() {
     }
   }, [user?.id])
 
-  // Refresh challenge status when component mounts (useful for returning from challenge page)
+  // Refresh challenge status when component mounts
   useEffect(() => {
     if (user && !loading) {
       refreshChallengeStatus()
@@ -569,7 +561,7 @@ export default function MemberHub() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button 
-                      onClick={() => {}} // Disabled routing temporarily
+                      onClick={() => navigate('/coffee')}
                       className="w-full bg-white text-black hover:bg-white/90 transition-all duration-200 h-12"
                     >
                       <Coffee className="h-4 w-4 mr-2" />
@@ -610,7 +602,7 @@ export default function MemberHub() {
       {/* Floating Action Button */}
       <FloatingActionButton
         icon={Coffee}
-        onClick={() => {}} // Disabled routing temporarily
+        onClick={() => navigate('/coffee')}
         label="Browse Coffee"
       />
     </div>
