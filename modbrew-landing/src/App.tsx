@@ -9,6 +9,7 @@ import LandingPage from './pages/LandingPage'
 import GalleryPage from './pages/GalleryPage'
 import MemberHub from './pages/MemberHub'
 import WeeklyChallenge from './pages/WeeklyChallenge'
+import ChallengeSubmissions from './pages/ChallengeSubmissions'
 import BrowseCoffee from './pages/BrowseCoffee'
 import DashboardLayout from './components/layout/DashboardLayout'
 import Home from './admin-pages/Home'
@@ -40,6 +41,11 @@ function App() {
           <Route path="/weekly-challenge" element={
             <ProtectedRoute requireAuth={true}>
               <WeeklyChallenge />
+            </ProtectedRoute>
+          } />
+          <Route path="/challenge-submissions" element={
+            <ProtectedRoute requireAuth={true}>
+              <ChallengeSubmissions />
             </ProtectedRoute>
           } />
           <Route path="/coffee" element={

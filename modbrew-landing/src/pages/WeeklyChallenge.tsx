@@ -127,7 +127,7 @@ export default function WeeklyChallenge() {
     }
 
     const fileExt = photo.file.name.split('.').pop()
-    const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
 
     const { error } = await supabase.storage
       .from('modbrew-5')
@@ -141,11 +141,21 @@ export default function WeeklyChallenge() {
       throw new Error(`Failed to upload ${photo.file.name}: ${error.message}`)
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    // Create 1-year signed URL for better access control
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from('modbrew-5')
-      .getPublicUrl(fileName)
+      .createSignedUrl(fileName, 31536000) // 1 year in seconds
 
-    return publicUrl
+    if (signedUrlError) {
+      console.error('Error creating signed URL:', signedUrlError)
+      // Fallback to public URL if signed URL fails
+      const { data: { publicUrl } } = supabase.storage
+        .from('modbrew-5')
+        .getPublicUrl(fileName)
+      return publicUrl
+    }
+
+    return signedUrlData.signedUrl
   }
 
   const handleSubmit = async () => {
@@ -452,10 +462,13 @@ export default function WeeklyChallenge() {
 
             {/* Upload Progress */}
             {uploading && (
-              <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <LoadingSpinner className="h-4 w-4 text-blue-400" />
-                  <span className="text-blue-400">Uploading photos...</span>
+              <div className="mb-8 p-8 bg-white/5 border border-white/20 rounded-xl">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <LoadingSpinner className="h-8 w-8 text-emerald-400" />
+                  <div className="text-center">
+                    <h3 className="text-lg font-medium text-white mb-1">Uploading Photos</h3>
+                    <p className="text-white/60">Please wait while we upload your images...</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -469,7 +482,7 @@ export default function WeeklyChallenge() {
               >
                 {submitting ? (
                   <>
-                    <LoadingSpinner className="h-4 w-4 mr-3" />
+                    <LoadingSpinner className="h-5 w-5 mr-3 text-black" />
                     Submitting Challenge...
                   </>
                 ) : (

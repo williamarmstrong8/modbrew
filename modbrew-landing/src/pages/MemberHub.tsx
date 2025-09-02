@@ -372,10 +372,13 @@ export default function MemberHub() {
                           exit={{ opacity: 0, scale: 0.9 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <div className="flex items-center space-x-2">
-                            <CheckCircle className="h-5 w-5 text-green-400" />
-                            <span className="text-green-400 font-medium">Completed</span>
-                          </div>
+                          <Button 
+                            onClick={() => navigate('/challenge-submissions')}
+                            className="bg-white text-black hover:bg-white/90 transition-all duration-200"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            View Submissions
+                          </Button>
                         </motion.div>
                       ) : (
                         <motion.div 
@@ -571,7 +574,7 @@ export default function MemberHub() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button 
-                      onClick={() => navigate('/coffee')}
+                      onClick={() => {}} // Disabled routing temporarily
                       className="w-full bg-white text-black hover:bg-white/90 transition-all duration-200 h-12"
                     >
                       <Coffee className="h-4 w-4 mr-2" />
@@ -609,7 +612,7 @@ export default function MemberHub() {
       {/* Floating Action Button */}
       <FloatingActionButton
         icon={Coffee}
-        onClick={() => navigate('/')}
+        onClick={() => {}} // Disabled routing temporarily
         label="Browse Coffee"
       />
     </div>
