@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, type Profile, type Membership } from '../lib/supabase'
 import { Button } from '../components/ui/button'
@@ -7,7 +7,6 @@ import { Badge } from '../components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar'
 import { Separator } from '../components/ui/separator'
 import { 
-  Crown, 
   Coffee, 
   Calendar, 
   Settings, 
@@ -19,7 +18,8 @@ import {
   ArrowRight,
   Sparkles,
   Heart,
-  Zap
+  Zap,
+  CheckCircle
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -32,6 +32,8 @@ export default function MemberHub() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [membership, setMembership] = useState<Membership | null>(null)
+  const [challengeStatus, setChallengeStatus] = useState<'not_started' | 'in_progress' | 'completed' | null>(null)
+
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -69,8 +71,32 @@ export default function MemberHub() {
           return
         }
 
+        // Fetch weekly challenge status
+        const { data: challengeData, error: challengeError } = await supabase
+          .from('weekly_challenges')
+          .select('status')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (challengeError && challengeError.code !== 'PGRST116') { // PGRST116 = no rows returned
+          console.error('Error fetching challenge status:', challengeError)
+        }
+
+        // Determine challenge status
+        let status: 'not_started' | 'in_progress' | 'completed' = 'not_started'
+        if (challengeData) {
+          if (challengeData.status === 'completed') {
+            status = 'completed'
+          } else if (challengeData.status === 'in_progress') {
+            status = 'in_progress'
+          }
+        }
+
         setProfile(profileData)
         setMembership(membershipData)
+        setChallengeStatus(status)
       } catch (error) {
         console.error('Error fetching user data:', error)
       } finally {
@@ -81,6 +107,45 @@ export default function MemberHub() {
     fetchUserData()
   }, [user, navigate])
 
+  const refreshChallengeStatus = useCallback(async () => {
+    if (!user?.id) return
+
+    try {
+      const { data: challengeData, error: challengeError } = await supabase
+        .from('weekly_challenges')
+        .select('status, submitted_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (challengeError && challengeError.code !== 'PGRST116') {
+        console.error('Error fetching challenge status:', challengeError)
+        return
+      }
+
+      let status: 'not_started' | 'in_progress' | 'completed' = 'not_started'
+      if (challengeData) {
+        if (challengeData.status === 'completed') {
+          status = 'completed'
+        } else if (challengeData.status === 'in_progress') {
+          status = 'in_progress'
+        }
+      }
+
+              setChallengeStatus(status)
+    } catch (error) {
+      console.error('Error refreshing challenge status:', error)
+    }
+  }, [user?.id])
+
+  // Refresh challenge status when component mounts (useful for returning from challenge page)
+  useEffect(() => {
+    if (user && !loading) {
+      refreshChallengeStatus()
+    }
+  }, [user, loading, refreshChallengeStatus])
+
   const handleSignOut = async () => {
     await signOut()
     navigate('/')
@@ -88,24 +153,13 @@ export default function MemberHub() {
 
 
 
-  const getMembershipIcon = (type: string) => {
-    switch (type) {
-      case 'vip':
-        return <Crown className="h-4 w-4" />
-      case 'premium':
-        return <Star className="h-4 w-4" />
-      case 'basic':
-        return <Coffee className="h-4 w-4" />
-      default:
-        return <Coffee className="h-4 w-4" />
-    }
-  }
+
 
   const getMembershipBenefits = (type: string) => {
     switch (type) {
       case 'vip':
         return [
-          { icon: <Crown className="h-5 w-5" />, text: 'Exclusive VIP Events', color: 'text-purple-400' },
+          { icon: <Star className="h-5 w-5" />, text: 'Exclusive VIP Events', color: 'text-purple-400' },
           { icon: <Gift className="h-5 w-5" />, text: 'Monthly Gift Box', color: 'text-pink-400' },
           { icon: <Sparkles className="h-5 w-5" />, text: 'Priority Access', color: 'text-yellow-400' },
           { icon: <Heart className="h-5 w-5" />, text: 'Personal Concierge', color: 'text-red-400' }
@@ -220,8 +274,7 @@ export default function MemberHub() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-12">
-        <AnimatePresence>
-          {/* Welcome Section */}
+        {/* Welcome Section */}
           <motion.div 
             className="mb-12"
             initial={{ opacity: 0, y: 20 }}
@@ -275,31 +328,97 @@ export default function MemberHub() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="p-3 rounded-lg bg-white/10">
-                        <Coffee className="h-5 w-5 text-white" />
+                        <AnimatePresence mode="wait">
+                          {challengeStatus === 'completed' ? (
+                            <motion.div 
+                              key="icon-completed"
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <CheckCircle className="h-5 w-5 text-green-400" />
+                            </motion.div>
+                          ) : (
+                            <motion.div 
+                              key="icon-not-completed"
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Coffee className="h-5 w-5 text-white" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                       <div>
                         <p className="text-white font-medium">Upload 5 ModBrew Images</p>
-                        <p className="text-white/60 text-sm">Get 20% off your next purchase</p>
+                        <p className="text-white/60 text-sm">
+                          {challengeStatus === 'completed' 
+                            ? 'Challenge completed! You earned 20% off your next purchase' 
+                            : 'Get 20% off your next purchase'
+                          }
+                        </p>
+
                       </div>
                     </div>
-                    <Button className="bg-white text-black hover:bg-white/90 transition-all duration-200">
-                      Participate
-                    </Button>
+                    <AnimatePresence mode="wait">
+                      {challengeStatus === 'completed' ? (
+                        <motion.div 
+                          key="challenge-completed"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className="h-5 w-5 text-green-400" />
+                            <span className="text-green-400 font-medium">Completed</span>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.div 
+                          key="challenge-not-completed"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Button 
+                            onClick={() => navigate('/weekly-challenge')}
+                            className="bg-white text-black hover:bg-white/90 transition-all duration-200"
+                          >
+                            {challengeStatus === 'in_progress' ? 'Continue' : 'Participate'}
+                          </Button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Challenge Stats */}
                   <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
                     <div className="text-center">
-                      <div className="text-xl font-medium text-white mb-1">3</div>
-                      <div className="text-white/60 text-sm">Days Left</div>
+                      <div className="text-xl font-medium text-white mb-1">
+                        {challengeStatus === 'completed' ? '✓' : '∞'}
+                      </div>
+                      <div className="text-white/60 text-sm">
+                        {challengeStatus === 'completed' ? 'Completed' : 'Always Open'}
+                      </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-medium text-white mb-1">127</div>
-                      <div className="text-white/60 text-sm">Participants</div>
+                      <div className="text-xl font-medium text-white mb-1">
+                        {challengeStatus === 'completed' ? '5' : '5'}
+                      </div>
+                      <div className="text-white/60 text-sm">
+                        {challengeStatus === 'completed' ? 'Photos Uploaded' : 'Photos Required'}
+                      </div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-medium text-white mb-1">20%</div>
-                      <div className="text-white/60 text-sm">Discount</div>
+                      <div className="text-white/60 text-sm">
+                        {challengeStatus === 'completed' ? 'Reward Earned' : 'Discount'}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -325,12 +444,7 @@ export default function MemberHub() {
                       Your current membership details and benefits
                     </CardDescription>
                   </div>
-                  <motion.div
-                    whileHover={{ scale: 1.05, rotate: 5 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {getMembershipIcon(membership.membership_type)}
-                  </motion.div>
+
                 </div>
               </CardHeader>
               <CardContent>
@@ -350,7 +464,6 @@ export default function MemberHub() {
                      <p className="text-white/40 text-sm font-medium uppercase tracking-wide">Member Since</p>
                      <p className="text-xl font-light text-white">
                        {new Date(membership.start_date).toLocaleDateString('en-US', { 
-                         weekday: 'long',
                          year: 'numeric',
                          month: 'long',
                          day: 'numeric'
@@ -491,7 +604,6 @@ export default function MemberHub() {
               </CardContent>
             </Card>
           </motion.div>
-        </AnimatePresence>
       </div>
 
       {/* Floating Action Button */}
@@ -503,3 +615,4 @@ export default function MemberHub() {
     </div>
   )
 }
+
