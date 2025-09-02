@@ -250,22 +250,22 @@ export default function MemberHub() {
                 transition={{ duration: 0.2 }}
               />
               <Separator orientation="vertical" className="h-6 bg-white/20 hidden sm:block" />
-              <h1 className="text-base sm:text-lg font-light tracking-wide">Member Hub</h1>
+              <h1 className="text-base sm:text-lg font-light tracking-wide hidden sm:block">Member Hub</h1>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+              <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
                 <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback className="bg-white/10 text-white text-xs sm:text-sm">
+                <AvatarFallback className="bg-white/10 text-white text-sm sm:text-base">
                   {profile.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <Button 
                 variant="ghost" 
                 onClick={handleSignOut}
-                className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 p-2 sm:p-2"
+                className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 p-2.5 sm:p-2"
                 size="sm"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-5 w-5 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
@@ -308,18 +308,20 @@ export default function MemberHub() {
           >
             <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
               <CardHeader className="pb-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                   <div>
-                    <CardTitle className="text-2xl font-light text-white mb-2">
-                      Weekly Challenge
-                    </CardTitle>
+                    <div className="flex items-center justify-between mb-2">
+                      <CardTitle className="text-2xl font-light text-white">
+                        Weekly Challenge
+                      </CardTitle>
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                        Active
+                      </Badge>
+                    </div>
                     <CardDescription className="text-white/60 font-light">
                       Upload 5 images of ModBrew for 20% off your next purchase
                     </CardDescription>
                   </div>
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                    Active
-                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
