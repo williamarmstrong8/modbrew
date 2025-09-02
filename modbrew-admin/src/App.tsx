@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { TooltipProvider } from './components/ui/tooltip'
 import { SidebarProvider } from './components/ui/sidebar'
+import { Toaster } from './components/ui/sonner'
 import DashboardLayout from './components/layout/DashboardLayout'
 import Home from './pages/Home'
 import Customers from './pages/Customers'
@@ -26,6 +27,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
+        <Toaster />
       </SidebarProvider>
     </TooltipProvider>
   )

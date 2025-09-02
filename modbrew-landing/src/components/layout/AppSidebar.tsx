@@ -6,7 +6,6 @@ import {
   Receipt,
   Package,
   BarChart3,
-  ArrowLeft,
 } from "lucide-react";
 import {
   Sidebar,
@@ -43,17 +42,6 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-12 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50">
-                  <NavLink 
-                    to="/"
-                    className="flex items-center gap-3 px-4 py-3 text-slate-700 font-medium"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                    <span>Back to Landing</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="h-12 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 data-[active=true]:bg-gradient-to-r data-[active=true]:from-amber-100 data-[active=true]:to-orange-100 data-[active=true]:text-amber-700">
