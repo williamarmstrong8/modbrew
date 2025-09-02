@@ -19,19 +19,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Define types for our database schema
-export type Profile = {
-  id: string;
-  email: string;
-  name?: string;
-  avatar_url?: string;
-  role: 'customer' | 'admin';
-  created_at: string;
-  updated_at: string;
-};
-
 export type Membership = {
   id: string;
   user_id: string;
+  name?: string;
+  email: string;
+  role: 'customer' | 'admin';
   membership_type: 'basic' | 'premium' | 'vip';
   status: 'active' | 'inactive' | 'cancelled';
   start_date: string;
