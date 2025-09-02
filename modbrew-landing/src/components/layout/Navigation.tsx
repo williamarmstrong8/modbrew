@@ -28,10 +28,10 @@ export default function Navigation() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
     >
-      <div className="w-full px-24">
-        <div className="flex justify-center items-center h-20">
+      <div className="w-full px-4 sm:px-8 md:px-16 lg:px-24">
+        <div className="flex justify-center items-center h-16 sm:h-20">
           <motion.div 
-            className="flex items-center space-x-6"
+            className="flex items-center space-x-3 sm:space-x-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
@@ -41,7 +41,7 @@ export default function Navigation() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
             >
-              <Button asChild variant="ghost" className="font-medium tracking-wide text-white hover:bg-transparent hover:text-white group">
+              <Button asChild variant="ghost" className="font-medium tracking-wide text-white hover:bg-transparent hover:text-white group text-sm sm:text-base">
                 <a href="/gallery" className="relative">
                   Gallery
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-600 group-hover:w-full"></span>
@@ -54,13 +54,13 @@ export default function Navigation() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, ease: "easeOut", delay: 0.7 }}
-              className="mx-8"
+              className="mx-4 sm:mx-8"
             >
               <a href="/" className="cursor-pointer">
                 <img 
                   src="/images/Mod Brew SMall White.png" 
                   alt="ModBrew" 
-                  className="h-8 w-auto opacity-90 hover:opacity-100 transition-opacity duration-300"
+                  className="h-6 w-auto sm:h-8 opacity-90 hover:opacity-100 transition-opacity duration-300"
                 />
               </a>
             </motion.div>
@@ -71,7 +71,7 @@ export default function Navigation() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
               >
-                <Button asChild variant="ghost" className="font-medium tracking-wide text-white hover:bg-transparent hover:text-white group">
+                <Button asChild variant="ghost" className="font-medium tracking-wide text-white hover:bg-transparent hover:text-white group text-sm sm:text-base">
                   <a href="/brewery" className="relative">
                     Brewery
                     <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-600 group-hover:w-full"></span>
@@ -84,7 +84,7 @@ export default function Navigation() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
               >
-                <Button asChild variant="ghost" className="font-medium tracking-wide text-white hover:bg-transparent hover:text-white group">
+                <Button asChild variant="ghost" className="font-medium tracking-wide text-white hover:bg-transparent hover:text-white group text-sm sm:text-base">
                   <a href="/auth" className="relative">
                     Brewery
                     <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
