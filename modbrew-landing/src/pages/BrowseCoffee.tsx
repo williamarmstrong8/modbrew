@@ -9,7 +9,6 @@ import {
   ArrowLeft, 
   Coffee, 
   Star, 
-  Heart, 
   X,
   Search,
   Clock,

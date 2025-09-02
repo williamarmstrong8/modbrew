@@ -10,7 +10,7 @@ export default function Navigation() {
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY
-      setIsScrolled(scrollTop > 50)
+      setIsScrolled(scrollTop > 0)
     }
 
     window.addEventListener('scroll', handleScroll)

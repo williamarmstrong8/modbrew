@@ -86,18 +86,7 @@ export default function MemberHub() {
     navigate('/')
   }
 
-  const getMembershipBadgeColor = (type: string) => {
-    switch (type) {
-      case 'vip':
-        return 'bg-gradient-to-r from-purple-500 to-pink-500'
-      case 'premium':
-        return 'bg-gradient-to-r from-blue-500 to-cyan-500'
-      case 'basic':
-        return 'bg-gradient-to-r from-emerald-500 to-teal-500'
-      default:
-        return 'bg-gradient-to-r from-gray-500 to-gray-600'
-    }
-  }
+
 
   const getMembershipIcon = (type: string) => {
     switch (type) {
