@@ -239,30 +239,30 @@ export default function MemberHub() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3 sm:space-x-6">
               <motion.img 
                 src="/images/Mod Brew Long.png" 
                 alt="ModBrew" 
-                className="h-8 w-auto"
+                className="h-6 w-auto sm:h-8"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.2 }}
               />
-              <Separator orientation="vertical" className="h-6 bg-white/20" />
-              <h1 className="text-lg font-light tracking-wide">Member Hub</h1>
+              <Separator orientation="vertical" className="h-6 bg-white/20 hidden sm:block" />
+              <h1 className="text-base sm:text-lg font-light tracking-wide">Member Hub</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-8 w-8">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                 <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback className="bg-white/10 text-white text-sm">
+                <AvatarFallback className="bg-white/10 text-white text-xs sm:text-sm">
                   {profile.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <Button 
                 variant="ghost" 
                 onClick={handleSignOut}
-                className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+                className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 p-2 sm:p-2"
                 size="sm"
               >
                 <LogOut className="h-4 w-4" />
@@ -273,7 +273,7 @@ export default function MemberHub() {
       </motion.header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Welcome Section */}
           <motion.div 
             className="mb-12"
@@ -325,9 +325,9 @@ export default function MemberHub() {
               <CardContent>
                 <div className="space-y-4">
                   {/* Challenge Info */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
                     <div className="flex items-center space-x-4">
-                      <div className="p-3 rounded-lg bg-white/10">
+                      <div className="p-3 rounded-lg bg-white/10 flex-shrink-0">
                         <AnimatePresence mode="wait">
                           {challengeStatus === 'completed' ? (
                             <motion.div 
@@ -352,7 +352,7 @@ export default function MemberHub() {
                           )}
                         </AnimatePresence>
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-white font-medium">Upload 5 ModBrew Images</p>
                         <p className="text-white/60 text-sm">
                           {challengeStatus === 'completed' 
@@ -360,7 +360,6 @@ export default function MemberHub() {
                             : 'Get 20% off your next purchase'
                           }
                         </p>
-
                       </div>
                     </div>
                     <AnimatePresence mode="wait">
@@ -371,10 +370,11 @@ export default function MemberHub() {
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.9 }}
                           transition={{ duration: 0.2 }}
+                          className="flex-shrink-0"
                         >
                           <Button 
                             onClick={() => navigate('/challenge-submissions')}
-                            className="bg-white text-black hover:bg-white/90 transition-all duration-200"
+                            className="w-full sm:w-auto bg-white text-black hover:bg-white/90 transition-all duration-200"
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
                             View Submissions
@@ -387,10 +387,11 @@ export default function MemberHub() {
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.9 }}
                           transition={{ duration: 0.2 }}
+                          className="flex-shrink-0"
                         >
                           <Button 
                             onClick={() => navigate('/weekly-challenge')}
-                            className="bg-white text-black hover:bg-white/90 transition-all duration-200"
+                            className="w-full sm:w-auto bg-white text-black hover:bg-white/90 transition-all duration-200"
                           >
                             {challengeStatus === 'in_progress' ? 'Continue' : 'Participate'}
                           </Button>
@@ -400,7 +401,7 @@ export default function MemberHub() {
                   </div>
 
                   {/* Challenge Stats */}
-                  <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10">
                     <div className="text-center">
                       <div className="text-xl font-medium text-white mb-1">
                         {challengeStatus === 'completed' ? '✓' : '∞'}
@@ -489,7 +490,7 @@ export default function MemberHub() {
               <h3 className="text-2xl font-light mb-2">Your Stats</h3>
               <p className="text-white/60 font-light">Your membership activity and achievements</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               <StatsCard
                 icon={Clock}
                 title="Days Active"
@@ -528,7 +529,7 @@ export default function MemberHub() {
               <h3 className="text-2xl font-light mb-2">Your Benefits</h3>
               <p className="text-white/60 font-light">Explore what your membership includes</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {benefits.map((benefit, index) => (
                 <motion.div
                   key={index}
@@ -571,7 +572,7 @@ export default function MemberHub() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button 
                       onClick={() => {}} // Disabled routing temporarily

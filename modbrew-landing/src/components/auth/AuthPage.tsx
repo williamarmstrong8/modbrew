@@ -70,7 +70,7 @@ export function AuthPage() {
           <motion.img
             src="/images/Mod Brew Long.png"
             alt="ModBrew"
-            className="mx-auto h-20 w-auto mb-8"
+            className="mx-auto w-80 sm:w-96 md:w-[28rem] lg:w-[32rem] xl:w-[36rem] mb-8"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
