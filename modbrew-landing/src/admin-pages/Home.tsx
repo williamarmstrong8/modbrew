@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import DatePicker from "../components/ui/date-picker";
 import { Users, DollarSign, TrendingUp, UserPlus, Minus } from "lucide-react";
 import { useState } from "react";
 import { useAdminContext } from "../contexts/AdminContext";
@@ -23,9 +25,9 @@ const Home = () => {
     const easternTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
     return easternTime.toISOString().split('T')[0];
   });
-  const [expenseName, setExpenseName] = useState("");
   const [expenseItem, setExpenseItem] = useState("");
   const [expensePrice, setExpensePrice] = useState("");
+  const [expensePurchaser, setExpensePurchaser] = useState<"will" | "mary" | "ben">("will");
 
   // Use AdminContext for data
   const { adminData, addDailySale, addExpense } = useAdminContext();
@@ -55,18 +57,18 @@ const Home = () => {
   const handleAddExpense = async () => {
     const price = parseFloat(expensePrice);
     
-    if (expenseName.trim() && expenseItem.trim() && !isNaN(price) && price > 0) {
+    if (expenseItem.trim() && !isNaN(price) && price > 0 && expensePurchaser) {
       try {
         await addExpense({
           purchased_at: expenseDate + 'T00:00:00Z', // Convert date to timestamp
-          item_name: `${expenseName.trim()} - ${expenseItem.trim()}`, // Combine name and item
+          item_name: expenseItem.trim(), // Use just the item description
           price: price,
-          purchaser: 'will' // Default purchaser, you can modify this logic
+          purchaser: expensePurchaser
         });
         
-        setExpenseName("");
         setExpenseItem("");
         setExpensePrice("");
+        setExpensePurchaser("will");
       } catch (error) {
         console.error('Error adding expense:', error);
       }
@@ -81,28 +83,28 @@ const Home = () => {
       value: `$${adminData.stats.totalRevenue.toFixed(2)}`, 
       change: adminData.stats.totalRevenue > 0 ? "All-time total" : "No sales recorded", 
       icon: DollarSign, 
-      color: "text-green-600" 
+      color: "text-green-400" 
     },
     { 
       title: "Total Customers", 
       value: adminData.stats.totalCustomers.toString(), 
       change: adminData.stats.totalCustomers > 0 ? "From sales data" : "No customers recorded", 
       icon: Users, 
-      color: "text-blue-600" 
+      color: "text-blue-400" 
     },
     { 
       title: "Total Members", 
       value: adminData.stats.totalMembers.toString(), 
       change: adminData.stats.totalMembers > 0 ? "All-time total" : "No members recorded", 
       icon: UserPlus, 
-      color: "text-purple-600" 
+      color: "text-purple-400" 
     },
     { 
       title: "Total Profit", 
       value: `$${adminData.stats.totalProfit.toFixed(2)}`, 
       change: adminData.stats.totalProfit > 0 ? "Revenue - Expenses" : "No profit recorded", 
       icon: TrendingUp, 
-      color: adminData.stats.totalProfit >= 0 ? "text-green-600" : "text-red-600" 
+      color: adminData.stats.totalProfit >= 0 ? "text-green-400" : "text-red-400" 
     }
   ];
 
@@ -110,14 +112,12 @@ const Home = () => {
     { 
       title: "Sales", 
       icon: UserPlus, 
-      color: "from-green-500 to-green-600",
       isModal: true,
       modalType: "sales"
     },
     { 
       title: "Expenses", 
       icon: Minus, 
-      color: "from-blue-500 to-blue-600",
       isModal: true,
       modalType: "expense"
     },
@@ -131,15 +131,13 @@ const Home = () => {
     time: new Date(sale.sales_date).toLocaleDateString()
   }));
 
-
-
   // Show loading state
   if (adminData.isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center text-white">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-slate-600">Loading your business data...</p>
+          <p className="mt-4 text-lg text-white/60">Loading your business data...</p>
         </div>
       </div>
     );
@@ -148,14 +146,14 @@ const Home = () => {
   // Show error state
   if (adminData.error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="text-red-600 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Error Loading Data</h2>
-          <p className="text-slate-600 mb-4">{adminData.error}</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="text-red-400 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-light text-white mb-2">Error Loading Data</h2>
+          <p className="text-white/60 mb-4">{adminData.error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+            className="bg-white text-black px-6 py-2 rounded-lg transition-all duration-200"
           >
             Retry
           </button>
@@ -165,24 +163,26 @@ const Home = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-slate-800">Welcome to Mod Brew! ☕</h1>
-        <p className="text-slate-600">Here's your business overview with live data from your database.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-light text-white tracking-wide">Welcome to Mod Brew! ☕</h1>
+          <p className="text-white/60 font-light text-lg">Here's your business overview with live data from your database.</p>
+        </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={stat.title} className="hover:shadow-lg transition-all duration-200 border-0 bg-white/80 backdrop-blur-sm" style={{ animationDelay: `${index * 100}ms` }}>
+        {stats.map((stat) => (
+          <Card key={stat.title} className="bg-white/5 border-white/10 backdrop-blur-sm card-override hover:bg-white/10 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">{stat.title}</CardTitle>
+              <CardTitle className="text-sm font-medium text-white/60">{stat.title}</CardTitle>
               <stat.icon className={`w-5 h-5 ${stat.color}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-800">{stat.value}</div>
-              <p className="text-xs text-slate-500 mt-1">{stat.change}</p>
+              <div className="text-2xl font-light text-white">{stat.value}</div>
+              <p className="text-xs text-white/40 mt-1">{stat.change}</p>
             </CardContent>
           </Card>
         ))}
@@ -190,25 +190,25 @@ const Home = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Quick Actions */}
-        <Card className="lg:col-span-1 border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-slate-800">Quick Actions</CardTitle>
+        <Card className="lg:col-span-1 bg-white/5 border-white/10 backdrop-blur-sm card-override h-fit">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-light text-white">Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-0">
             {quickActions.map((action) => (
               action.isModal ? (
                 <Dialog key={action.title}>
                   <DialogTrigger asChild>
                     <Button
-                      className={`w-full h-14 bg-gradient-to-r ${action.color} hover:shadow-lg transition-all duration-200 text-white border-0`}
+                      className="w-full h-14 bg-white text-black border-white hover:bg-white hover:text-black transition-all duration-200"
                     >
                       <action.icon className="w-5 h-5 mr-3" />
                       {action.title}
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="bg-black border-white/10">
                     <DialogHeader>
-                      <DialogTitle>
+                      <DialogTitle className="text-white">
                         {action.modalType === "sales" ? "Add Sales" : "Add Expense"}
                       </DialogTitle>
                     </DialogHeader>
@@ -216,33 +216,24 @@ const Home = () => {
                       {action.modalType === "expense" ? (
                         <>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Date</label>
-                            <Input
-                              type="date"
+                            <label className="text-sm font-medium text-white">Date</label>
+                            <DatePicker
                               value={expenseDate}
-                              onChange={(e) => setExpenseDate(e.target.value)}
+                              onChange={setExpenseDate}
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Name</label>
+                            <label className="text-sm font-medium text-white">Item</label>
                             <Input
                               type="text"
-                              placeholder="Enter name"
-                              value={expenseName}
-                              onChange={(e) => setExpenseName(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Item</label>
-                            <Input
-                              type="text"
-                              placeholder="Enter item"
+                              placeholder="Enter item description"
                               value={expenseItem}
                               onChange={(e) => setExpenseItem(e.target.value)}
+                              className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20"
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Price ($)</label>
+                            <label className="text-sm font-medium text-white">Price ($)</label>
                             <Input
                               type="number"
                               placeholder="Enter price"
@@ -250,21 +241,35 @@ const Home = () => {
                               onChange={(e) => setExpensePrice(e.target.value)}
                               min="0"
                               step="0.01"
+                              className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20"
                             />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-white">Purchaser</label>
+                            <Select value={expensePurchaser} onValueChange={(value: "will" | "mary" | "ben") => setExpensePurchaser(value)}>
+                              <SelectTrigger className="bg-white/5 border-white/10 text-white focus:bg-white/10 focus:border-white/20">
+                                <SelectValue placeholder="Select purchaser" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-black border-white/10">
+                                <SelectItem value="mary" className="text-white hover:bg-white/10">Mary</SelectItem>
+                                <SelectItem value="will" className="text-white hover:bg-white/10">Will</SelectItem>
+                                <SelectItem value="ben" className="text-white hover:bg-white/10">Ben</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                           <div className="flex justify-end space-x-2">
                             <Button
                               variant="outline"
                               onClick={() => {
-                                setExpenseName("");
                                 setExpenseItem("");
                                 setExpensePrice("");
                               }}
+                              className="bg-white text-black border-white hover:bg-white hover:text-black"
                             >
                               Clear
                             </Button>
                             <Button
-                              className={`bg-gradient-to-r ${action.color}`}
+                              className="bg-white text-black border-white hover:bg-white hover:text-black"
                               onClick={handleAddExpense}
                             >
                               Add Expense
@@ -274,15 +279,14 @@ const Home = () => {
                       ) : (
                         <>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Date</label>
-                            <Input
-                              type="date"
+                            <label className="text-sm font-medium text-white">Date</label>
+                            <DatePicker
                               value={salesDate}
-                              onChange={(e) => setSalesDate(e.target.value)}
+                              onChange={setSalesDate}
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Customer Count</label>
+                            <label className="text-sm font-medium text-white">Customer Count</label>
                             <Input
                               type="number"
                               placeholder="Enter number of customers"
@@ -290,10 +294,11 @@ const Home = () => {
                               onChange={(e) => setCustomerCount(e.target.value)}
                               min="1"
                               step="1"
+                              className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20"
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Sales ($)</label>
+                            <label className="text-sm font-medium text-white">Sales ($)</label>
                             <Input
                               type="number"
                               placeholder="Enter sales amount"
@@ -301,6 +306,7 @@ const Home = () => {
                               onChange={(e) => setGrossSales(e.target.value)}
                               min="0"
                               step="0.01"
+                              className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20"
                             />
                           </div>
                           <div className="flex justify-end space-x-2">
@@ -310,11 +316,12 @@ const Home = () => {
                                 setCustomerCount("");
                                 setGrossSales("");
                               }}
+                              className="bg-white text-black border-white hover:bg-white hover:text-black"
                             >
                               Clear
                             </Button>
                             <Button
-                              className={`bg-gradient-to-r ${action.color}`}
+                              className="bg-white text-black border-white hover:bg-white hover:text-black"
                               onClick={handleAddDailySales}
                             >
                               Add Sales
@@ -328,7 +335,7 @@ const Home = () => {
               ) : (
                 <Button
                   key={action.title}
-                  className={`w-full h-14 bg-gradient-to-r ${action.color} hover:shadow-lg transition-all duration-200 text-white border-0`}
+                  className="w-full h-14 bg-white text-black border-white hover:bg-white hover:text-black transition-all duration-200"
                 >
                   <action.icon className="w-5 h-5 mr-3" />
                   {action.title}
@@ -339,21 +346,21 @@ const Home = () => {
         </Card>
 
         {/* Recent Orders */}
-        <Card className="lg:col-span-2 border-0 bg-white/80 backdrop-blur-sm">
+        <Card className="lg:col-span-2 bg-white/5 border-white/10 backdrop-blur-sm card-override">
           <CardHeader>
-            <CardTitle className="text-xl font-bold text-slate-800">Recent Orders</CardTitle>
+            <CardTitle className="text-xl font-light text-white">Recent Orders</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
+                <div key={order.id} className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/10">
                   <div className="space-y-1">
-                    <p className="font-medium text-slate-800">{order.id} - {order.customer}</p>
-                    <p className="text-sm text-slate-600">{order.items}</p>
+                    <p className="font-medium text-white">{order.id} - {order.customer}</p>
+                    <p className="text-sm text-white/60">{order.items}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-slate-800">{order.total}</p>
-                    <p className="text-xs text-slate-500">{order.time}</p>
+                    <p className="font-medium text-white">{order.total}</p>
+                    <p className="text-xs text-white/40">{order.time}</p>
                   </div>
                 </div>
               ))}
@@ -361,8 +368,6 @@ const Home = () => {
           </CardContent>
         </Card>
       </div>
-
-
     </div>
   );
 };
