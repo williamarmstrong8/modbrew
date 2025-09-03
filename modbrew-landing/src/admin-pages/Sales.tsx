@@ -16,28 +16,28 @@ const Sales = () => {
       value: `$${adminData.stats.totalRevenue.toFixed(2)}`, 
       change: "All-time total", 
       icon: DollarSign, 
-      color: "text-green-600" 
+      color: "text-green-400" 
     },
     { 
       title: "Total Orders", 
       value: adminData.stats.totalCustomers.toString(), 
       change: "All-time total", 
       icon: ShoppingCart, 
-      color: "text-blue-600" 
+      color: "text-blue-400" 
     },
     { 
       title: "Total Profit", 
       value: `$${adminData.stats.totalProfit.toFixed(2)}`, 
       change: "Revenue - Expenses", 
       icon: TrendingUp, 
-      color: adminData.stats.totalProfit >= 0 ? "text-green-600" : "text-red-600" 
+      color: adminData.stats.totalProfit >= 0 ? "text-green-400" : "text-red-400" 
     },
     { 
       title: "Avg Order Value", 
       value: `$${adminData.stats.averageOrderValue.toFixed(2)}`, 
       change: "All-time average", 
       icon: Clock, 
-      color: "text-purple-600" 
+      color: "text-purple-400" 
     }
   ];
 
@@ -139,16 +139,19 @@ const Sales = () => {
     return result;
   }, [adminData.dailySales]);
 
-  // Transform daily sales to recent orders format
+  // Transform daily sales to recent orders format - sorted from most recent to least recent
   const recentOrders = useMemo(() => {
-    return adminData.dailySales.slice(0, 6).map((sale, index) => ({
-      id: `#${String(index + 1).padStart(3, '0')}`,
-      customer: `${sale.customer_count} customers`,
-      items: "Daily sales",
-      total: `$${sale.gross_sales.toFixed(2)}`,
-      status: "Completed",
-      time: new Date(sale.sales_date).toLocaleDateString()
-    }));
+    return adminData.dailySales
+      .sort((a, b) => new Date(b.sales_date).getTime() - new Date(a.sales_date).getTime())
+      .slice(0, 6)
+      .map((sale) => ({
+        id: `#${String(sale.id).padStart(3, '0')}`,
+        customer: `${sale.customer_count} customers`,
+        items: "Daily sales",
+        total: `$${sale.gross_sales.toFixed(2)}`,
+        status: "Completed",
+        time: new Date(sale.sales_date).toLocaleDateString()
+      }));
   }, [adminData.dailySales]);
 
   // Note: Individual product sales data not available in current structure
@@ -159,20 +162,20 @@ const Sales = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Completed": return "bg-green-100 text-green-800";
-      case "In Progress": return "bg-blue-100 text-blue-800";
-      case "Pending": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "Completed": return "bg-green-500/20 text-green-400 border-green-500/30";
+      case "In Progress": return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      case "Pending": return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      default: return "bg-white/10 text-white/80 border-white/20";
     }
   };
 
   // Show loading state
   if (adminData.isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center text-white">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-slate-600">Loading sales data...</p>
+          <p className="mt-4 text-lg text-white/60">Loading sales data...</p>
         </div>
       </div>
     );
@@ -181,14 +184,14 @@ const Sales = () => {
   // Show error state
   if (adminData.error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="text-red-600 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Error Loading Data</h2>
-          <p className="text-slate-600 mb-4">{adminData.error}</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="text-red-400 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-light text-white mb-2">Error Loading Data</h2>
+          <p className="text-white/60 mb-4">{adminData.error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+            className="bg-white text-black px-6 py-2 rounded-lg transition-all duration-200"
           >
             Retry
           </button>
@@ -198,50 +201,56 @@ const Sales = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-slate-800">Sales Dashboard</h1>
-        <p className="text-slate-600">Track your sales performance and order management</p>
+        <h1 className="text-3xl font-light text-white tracking-wide">Sales Dashboard</h1>
+        <p className="text-white/60 font-light text-lg">Track your sales performance and order management</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {salesStats.map((stat, index) => (
-          <Card key={stat.title} className="hover:shadow-lg transition-all duration-200 border-0 bg-white/80 backdrop-blur-sm" style={{ animationDelay: `${index * 100}ms` }}>
+        {salesStats.map((stat) => (
+          <Card key={stat.title} className="bg-white/5 border-white/10 backdrop-blur-sm card-override hover:bg-white/10 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">{stat.title}</CardTitle>
+              <CardTitle className="text-sm font-medium text-white/60">{stat.title}</CardTitle>
               <stat.icon className={`w-5 h-5 ${stat.color}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-800">{stat.value}</div>
-              <p className="text-xs text-slate-500 mt-1">{stat.change}</p>
+              <div className="text-2xl font-light text-white">{stat.value}</div>
+              <p className="text-xs text-white/40 mt-1">{stat.change}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="orders">Recent Orders</TabsTrigger>
-          <TabsTrigger value="products">Top Products</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 bg-white/5 border-white/10">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/80 data-[state=active]:text-black">Overview</TabsTrigger>
+          <TabsTrigger value="orders" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/80 data-[state=active]:text-black">Recent Orders</TabsTrigger>
+          <TabsTrigger value="products" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/80 data-[state=active]:text-black">Top Products</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Weekly Sales by Day Chart */}
-            <Card className="border-0 bg-white/80 backdrop-blur-sm">
+            <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-slate-800">Weekly Sales by Day</CardTitle>
+                <CardTitle className="text-xl font-light text-white">Weekly Sales by Day</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={weeklySalesByDay}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                    <XAxis dataKey="day" stroke="rgba(255,255,255,0.6)" />
+                    <YAxis stroke="rgba(255,255,255,0.6)" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(0,0,0,0.9)', 
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'white'
+                      }}
+                    />
                     <Bar dataKey="sales" fill="#F59E0B" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -249,17 +258,23 @@ const Sales = () => {
             </Card>
 
             {/* Weekly Sales Trend */}
-            <Card className="border-0 bg-white/80 backdrop-blur-sm">
+            <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-slate-800">Weekly Sales Trend</CardTitle>
+                <CardTitle className="text-xl font-light text-white">Weekly Sales Trend</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={weeklySalesData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                    <XAxis dataKey="day" stroke="rgba(255,255,255,0.6)" />
+                    <YAxis stroke="rgba(255,255,255,0.6)" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(0,0,0,0.9)', 
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'white'
+                      }}
+                    />
                     <Line type="monotone" dataKey="sales" stroke="#8B5CF6" strokeWidth={3} dot={{ fill: "#8B5CF6", strokeWidth: 2 }} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -269,25 +284,25 @@ const Sales = () => {
         </TabsContent>
 
         <TabsContent value="orders" className="space-y-6">
-          <Card className="border-0 bg-white/80 backdrop-blur-sm">
+          <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-slate-800">Recent Orders</CardTitle>
+              <CardTitle className="text-xl font-light text-white">Recent Orders</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
+                  <div key={order.id} className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/10">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <p className="font-medium text-slate-800">{order.id}</p>
+                        <p className="font-medium text-white">{order.id}</p>
                         <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
                       </div>
-                      <p className="text-sm text-slate-600">{order.customer}</p>
-                      <p className="text-sm text-slate-500">{order.items}</p>
+                      <p className="text-sm text-white/60">{order.customer}</p>
+                      <p className="text-sm text-white/40">{order.items}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-slate-800">{order.total}</p>
-                      <p className="text-xs text-slate-500">{order.time}</p>
+                      <p className="font-medium text-white">{order.total}</p>
+                      <p className="text-xs text-white/40">{order.time}</p>
                     </div>
                   </div>
                 ))}
@@ -297,26 +312,26 @@ const Sales = () => {
         </TabsContent>
 
         <TabsContent value="products" className="space-y-6">
-          <Card className="border-0 bg-white/80 backdrop-blur-sm">
+          <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-slate-800">Top Selling Products</CardTitle>
+              <CardTitle className="text-xl font-light text-white">Top Selling Products</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {topSellingItems.map((item, index) => (
-                  <div key={item.name} className="flex items-center justify-between p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
+                  <div key={item.name} className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/10">
                     <div className="flex items-center space-x-4">
-                      <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                        <span className="text-amber-600 font-bold">{index + 1}</span>
+                      <div className="w-8 h-8 bg-amber-500/20 rounded-full flex items-center justify-center border border-amber-500/30">
+                        <span className="text-amber-400 font-bold">{index + 1}</span>
                       </div>
                       <div>
-                        <p className="font-medium text-slate-800">{item.name}</p>
-                        <p className="text-sm text-slate-600">{item.sales} sold today</p>
+                        <p className="font-medium text-white">{item.name}</p>
+                        <p className="text-sm text-white/60">{item.sales} sold today</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-slate-800">{item.revenue}</p>
-                      <p className="text-sm text-green-600">{item.growth}</p>
+                      <p className="font-medium text-white">{item.revenue}</p>
+                      <p className="text-sm text-green-400">{item.growth}</p>
                     </div>
                   </div>
                 ))}

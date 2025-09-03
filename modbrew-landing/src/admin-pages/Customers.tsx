@@ -3,7 +3,8 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import { Search, Plus, Mail, Phone, MapPin } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { Search, Plus, Eye, Mail } from "lucide-react";
 import { useAdminContext } from "../contexts/AdminContext";
 import { useState } from "react";
 
@@ -22,6 +23,7 @@ const Customers = () => {
     totalSpent: "$0.00", // Not available in memberships table
     lastVisit: new Date(membership.updated_at).toLocaleDateString(),
     status: membership.membership_type,
+    role: membership.role || "Member", // Add role field from Supabase
     avatar: "/placeholder-avatar1.jpg"
   }));
 
@@ -34,10 +36,10 @@ const Customers = () => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case "vip": return "bg-purple-100 text-purple-800";
-      case "premium": return "bg-blue-100 text-blue-800";
-      case "basic": return "bg-green-100 text-green-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "vip": return "bg-purple-500/20 text-purple-400 border-purple-500/30";
+      case "premium": return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      case "basic": return "bg-green-500/20 text-green-400 border-green-500/30";
+      default: return "bg-white/10 text-white/80 border-white/20";
     }
   };
 
@@ -52,10 +54,10 @@ const Customers = () => {
   // Show loading state
   if (adminData.isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center text-white">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-slate-600">Loading customer data...</p>
+          <p className="mt-4 text-lg text-white/60">Loading customer data...</p>
         </div>
       </div>
     );
@@ -64,14 +66,14 @@ const Customers = () => {
   // Show error state
   if (adminData.error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="text-red-600 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Error Loading Data</h2>
-          <p className="text-slate-600 mb-4">{adminData.error}</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="text-red-400 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-light text-white mb-2">Error Loading Data</h2>
+          <p className="text-white/60 mb-4">{adminData.error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+            className="bg-white text-black px-6 py-2 rounded-lg transition-all duration-200"
           >
             Retry
           </button>
@@ -81,14 +83,14 @@ const Customers = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Customers</h1>
-          <p className="text-slate-600">Manage your customer relationships and loyalty</p>
+          <h1 className="text-3xl font-light text-white tracking-wide">Customers</h1>
+          <p className="text-white/60 font-light text-lg">Manage your customer relationships and loyalty</p>
         </div>
-        <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700">
+        <Button className="bg-white text-black border-white hover:bg-gray-100 hover:border-gray-200">
           <Plus className="w-4 h-4 mr-2" />
           Add Customer
         </Button>
@@ -96,14 +98,14 @@ const Customers = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {customerStats.map((stat, index) => (
-          <Card key={stat.title} className="border-0 bg-white/80 backdrop-blur-sm" style={{ animationDelay: `${index * 100}ms` }}>
+        {customerStats.map((stat) => (
+          <Card key={stat.title} className="bg-white/5 border-white/10 backdrop-blur-sm card-override hover:bg-white/10 transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
-                  <p className="text-sm text-green-600">{stat.change}</p>
+                  <p className="text-sm text-white/60">{stat.title}</p>
+                  <p className="text-2xl font-light text-white">{stat.value}</p>
+                  <p className="text-sm text-green-400">{stat.change}</p>
                 </div>
               </div>
             </CardContent>
@@ -112,81 +114,148 @@ const Customers = () => {
       </div>
 
       {/* Search and Filters */}
-      <Card className="border-0 bg-white/80 backdrop-blur-sm">
+      <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
         <CardContent className="p-6">
           <div className="flex items-center space-x-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
               <Input
                 placeholder="Search customers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-50 border-slate-200 focus:bg-white"
+                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20"
               />
             </div>
-            <Button variant="outline">Filter</Button>
-            <Button variant="outline">Export</Button>
+
           </div>
         </CardContent>
       </Card>
 
       {/* Customer List */}
-      <Card className="border-0 bg-white/80 backdrop-blur-sm">
+      <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-slate-800">Customer Directory</CardTitle>
+          <CardTitle className="text-xl font-light text-white">Customer Directory</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {filteredCustomers.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-slate-400 text-6xl mb-4">👥</div>
-                <h3 className="text-lg font-semibold text-slate-600 mb-2">No customers found</h3>
-                <p className="text-slate-500">
+                <div className="text-white/40 text-6xl mb-4">👥</div>
+                <h3 className="text-lg font-light text-white mb-2">No customers found</h3>
+                <p className="text-white/60">
                   {searchTerm ? `No customers match "${searchTerm}"` : "No customers have been added yet"}
                 </p>
               </div>
             ) : (
               filteredCustomers.map((customer) => (
-                <div key={customer.id} className="flex items-center justify-between p-6 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
+                <div key={customer.id} className="flex items-center justify-between p-6 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/10">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={customer.avatar} alt={customer.name} />
-                      <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                      <AvatarFallback className="bg-white/10 text-white">{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-slate-800">{customer.name}</h3>
+                        <h3 className="font-medium text-white">{customer.name}</h3>
                         <Badge className={getStatusColor(customer.status)}>{customer.status}</Badge>
+                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">{customer.role}</Badge>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-slate-600">
-                        <div className="flex items-center space-x-1">
-                          <Mail className="w-3 h-3" />
-                          <span>{customer.email}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Phone className="w-3 h-3" />
-                          <span>{customer.phone}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <MapPin className="w-3 h-3" />
-                          <span>{customer.address}</span>
-                        </div>
+                      <div className="flex items-center space-x-2 text-sm text-white/60">
+                        <Mail className="w-3 h-3" />
+                        <span>{customer.email}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="text-right space-y-1">
-                    <div className="text-sm text-slate-600">
-                      {customer.totalOrders} orders • {customer.totalSpent} spent
-                    </div>
-                    <div className="text-xs text-slate-500">Last visit: {customer.lastVisit}</div>
+                  <div className="text-right">
                     <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Mail className="w-3 h-3 mr-1" />
-                        Email
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="bg-white text-black border-white">
+                            <Eye className="w-3 h-3 mr-1" />
+                            View
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-black border-white/10 max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle className="text-white text-xl font-light">Member Details</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-6">
+                            {/* Member Header */}
+                            <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-lg border border-white/10">
+                              <Avatar className="h-16 w-16">
+                                <AvatarImage src={customer.avatar} alt={customer.name} />
+                                <AvatarFallback className="bg-white/10 text-white text-lg">{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h3 className="text-xl font-light text-white">{customer.name}</h3>
+                                <div className="flex items-center space-x-2 mt-2">
+                                  <Badge className={getStatusColor(customer.status)}>{customer.status}</Badge>
+                                  <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">{customer.role}</Badge>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Member Information */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-4">
+                                <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                                  <h4 className="text-sm font-medium text-white/60 mb-2">Contact Information</h4>
+                                  <div className="space-y-2">
+                                    <div className="flex items-center space-x-2">
+                                      <Mail className="w-4 h-4 text-white/40" />
+                                      <span className="text-white">{customer.email}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                                  <h4 className="text-sm font-medium text-white/60 mb-2">Membership Details</h4>
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                      <span className="text-white/60">Type:</span>
+                                      <span className="text-white">{customer.status}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-white/60">Role:</span>
+                                      <span className="text-white">{customer.role}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-white/60">Member Since:</span>
+                                      <span className="text-white">{customer.lastVisit}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-4">
+                                <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                                  <h4 className="text-sm font-medium text-white/60 mb-2">Activity Summary</h4>
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                      <span className="text-white/60">Total Orders:</span>
+                                      <span className="text-white">{customer.totalOrders}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-white/60">Total Spent:</span>
+                                      <span className="text-white">{customer.totalSpent}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                                  <h4 className="text-sm font-medium text-white/60 mb-2">Quick Actions</h4>
+                                  <div className="space-y-2">
+                                    <Button className="w-full bg-white text-black border-white hover:bg-white hover:text-black">
+                                      <Mail className="w-4 h-4 mr-2" />
+                                      Send Email
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                 </div>

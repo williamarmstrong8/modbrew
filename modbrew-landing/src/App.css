@@ -72,6 +72,121 @@
   .card-override .text-muted-foreground {
     color: rgba(255, 255, 255, 0.6) !important;
   }
+  
+  /* Date input styling for dark theme */
+  input[type="date"] {
+    color-scheme: dark !important;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(0) contrast(200) !important;
+  }
+  
+  input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+    color: white !important;
+  }
+  
+  input[type="date"]::-webkit-datetime-edit-text {
+    color: white !important;
+  }
+  
+  input[type="date"]::-webkit-datetime-edit-month-field,
+  input[type="date"]::-webkit-datetime-edit-day-field,
+  input[type="date"]::-webkit-datetime-edit-year-field {
+    color: white !important;
+    background: transparent !important;
+  }
+  
+  input[type="date"]::-webkit-datetime-edit-month-field:focus,
+  input[type="date"]::-webkit-datetime-edit-day-field:focus,
+  input[type="date"]::-webkit-datetime-edit-year-field:focus {
+    background: rgba(255, 255, 255, 0.1) !important;
+    outline: none !important;
+  }
+  
+  /* Calendar popup styling for dark theme */
+  input[type="date"]::-webkit-calendar-picker {
+    background: black !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    color: white !important;
+  }
+  
+  /* Calendar header styling */
+  input[type="date"]::-webkit-calendar-picker-header {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: white !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  /* Calendar navigation buttons */
+  input[type="date"]::-webkit-calendar-picker-button {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 4px !important;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-button:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+  
+  /* Calendar grid styling */
+  input[type="date"]::-webkit-calendar-picker-grid {
+    background: black !important;
+    color: white !important;
+  }
+  
+  /* Calendar day cells */
+  input[type="date"]::-webkit-calendar-picker-day {
+    background: transparent !important;
+    color: white !important;
+    border: 1px solid transparent !important;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-day:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-day:selected {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+  }
+  
+  /* Today's date styling */
+  input[type="date"]::-webkit-calendar-picker-day:today {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+  
+  /* Month/year navigation */
+  input[type="date"]::-webkit-calendar-picker-month,
+  input[type="date"]::-webkit-calendar-picker-year {
+    background: transparent !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 4px !important;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-month:focus,
+  input[type="date"]::-webkit-calendar-picker-year:focus {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    outline: none !important;
+  }
+  
+  /* Remove spinner buttons from number inputs */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+  }
+  
+  input[type="number"] {
+    -moz-appearance: textfield !important;
+  }
+  
   html {
     /* Prevent iOS overscroll bounce */
     overscroll-behavior: none;
