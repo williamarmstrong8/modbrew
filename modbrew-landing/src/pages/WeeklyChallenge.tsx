@@ -36,6 +36,7 @@ export default function WeeklyChallenge() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [fileInputKey, setFileInputKey] = useState(0)
 
   useEffect(() => {
     if (!user) {
@@ -64,6 +65,8 @@ export default function WeeklyChallenge() {
 
     setPhotos(prev => [...prev, ...newPhotos])
     setError(null)
+    // Reset file input key to ensure fresh input for next selection
+    resetFileInput()
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -109,6 +112,12 @@ export default function WeeklyChallenge() {
 
     setPhotos(prev => [...prev, ...newPhotos])
     setError(null)
+    // Reset file input key to ensure fresh input for next selection
+    resetFileInput()
+  }
+
+  const resetFileInput = () => {
+    setFileInputKey(prev => prev + 1)
   }
 
   const removePhoto = (id: string) => {
@@ -119,6 +128,9 @@ export default function WeeklyChallenge() {
       }
       return prev.filter(p => p.id !== id)
     })
+    
+    // Reset the file input to allow re-uploading the same file
+    resetFileInput()
   }
 
   const uploadPhoto = async (photo: ChallengePhoto): Promise<string> => {
@@ -332,6 +344,7 @@ export default function WeeklyChallenge() {
               <div className="relative">
                 <input
                   id="photo-upload"
+                  key={fileInputKey}
                   type="file"
                   accept="image/*"
                   multiple
@@ -398,6 +411,8 @@ export default function WeeklyChallenge() {
                     onClick={() => {
                       setPhotos([])
                       setError(null)
+                      // Reset the file input to allow re-uploading
+                      resetFileInput()
                     }}
                     className="text-white/60 hover:text-white hover:bg-white/10"
                   >

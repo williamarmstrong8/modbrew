@@ -48,10 +48,17 @@ export default function AccountSettings() {
           .select('*')
           .eq('user_id', user.id)
           .eq('status', 'active')
-          .single()
+          .maybeSingle()
 
         if (membershipError) {
           console.error('Error fetching membership:', membershipError)
+          return
+        }
+
+        // If no membership found, redirect to signup
+        if (!membershipData) {
+          console.log('No membership found for user, redirecting to signup')
+          navigate('/auth?mode=signup')
           return
         }
 
@@ -62,6 +69,9 @@ export default function AccountSettings() {
         })
       } catch (error) {
         console.error('Error fetching user data:', error)
+        // If there's an error, redirect to signup as a fallback
+        navigate('/auth?mode=signup')
+        return
       } finally {
         setLoading(false)
       }

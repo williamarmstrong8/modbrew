@@ -61,6 +61,11 @@ export function AuthForm({ onModeChange, initialMode = 'signin' }: AuthFormProps
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              name: name.trim()
+            }
+          }
         })
         
         if (error) throw error
