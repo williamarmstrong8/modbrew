@@ -1,61 +1,160 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { DollarSign, TrendingUp, ShoppingCart, Clock } from "lucide-react";
+import { useAdminContext } from "../contexts/AdminContext";
+import { useMemo } from "react";
 
 const Sales = () => {
+  const { adminData } = useAdminContext();
+
+  // Calculate real sales stats
   const salesStats = [
-    { title: "Today's Sales", value: "$1,247", change: "+12% from yesterday", icon: DollarSign, color: "text-green-600" },
-    { title: "Orders Today", value: "89", change: "+5 from yesterday", icon: ShoppingCart, color: "text-blue-600" },
-    { title: "Avg Order Value", value: "$14.01", change: "+$0.75 this week", icon: TrendingUp, color: "text-purple-600" },
-    { title: "Pending Orders", value: "12", change: "3 ready for pickup", icon: Clock, color: "text-orange-600" }
+    { 
+      title: "Total Sales", 
+      value: `$${adminData.stats.totalRevenue.toFixed(2)}`, 
+      change: "All-time total", 
+      icon: DollarSign, 
+      color: "text-green-600" 
+    },
+    { 
+      title: "Total Orders", 
+      value: adminData.stats.totalCustomers.toString(), 
+      change: "All-time total", 
+      icon: ShoppingCart, 
+      color: "text-blue-600" 
+    },
+    { 
+      title: "Total Profit", 
+      value: `$${adminData.stats.totalProfit.toFixed(2)}`, 
+      change: "Revenue - Expenses", 
+      icon: TrendingUp, 
+      color: adminData.stats.totalProfit >= 0 ? "text-green-600" : "text-red-600" 
+    },
+    { 
+      title: "Avg Order Value", 
+      value: `$${adminData.stats.averageOrderValue.toFixed(2)}`, 
+      change: "All-time average", 
+      icon: Clock, 
+      color: "text-purple-600" 
+    }
   ];
 
-  const hourlySalesData = [
-    { hour: "6 AM", sales: 45, orders: 8 },
-    { hour: "7 AM", sales: 120, orders: 15 },
-    { hour: "8 AM", sales: 280, orders: 32 },
-    { hour: "9 AM", sales: 320, orders: 28 },
-    { hour: "10 AM", sales: 180, orders: 22 },
-    { hour: "11 AM", sales: 150, orders: 18 },
-    { hour: "12 PM", sales: 420, orders: 45 },
-    { hour: "1 PM", sales: 380, orders: 38 },
-    { hour: "2 PM", sales: 290, orders: 31 },
-    { hour: "3 PM", sales: 220, orders: 25 },
-    { hour: "4 PM", sales: 180, orders: 20 },
-    { hour: "5 PM", sales: 160, orders: 18 },
-    { hour: "6 PM", sales: 95, orders: 12 },
-    { hour: "7 PM", sales: 60, orders: 8 },
-    { hour: "8 PM", sales: 30, orders: 4 }
-  ];
+  // Calculate weekly sales data for last 7 days (today as rightmost)
+  const weeklySalesData = useMemo(() => {
+    if (!adminData.dailySales.length) return [];
+    
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 6); // 7 days including today
+    
+    const salesByDate: { [key: string]: { sales: number; orders: number } } = {};
+    
+    // Initialize all 7 days with 0
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(sevenDaysAgo);
+      date.setDate(sevenDaysAgo.getDate() + i);
+      const dateKey = date.toISOString().split('T')[0];
+      salesByDate[dateKey] = { sales: 0, orders: 0 };
+    }
+    
+    // Filter sales from last 7 days
+    adminData.dailySales.forEach(sale => {
+      const saleDate = new Date(sale.sales_date);
+      if (saleDate >= sevenDaysAgo && saleDate <= today) {
+        const dateKey = sale.sales_date.split('T')[0];
+        if (salesByDate[dateKey]) {
+          salesByDate[dateKey].sales += sale.gross_sales;
+          salesByDate[dateKey].orders += sale.customer_count;
+        }
+      }
+    });
+    
+    // Create array with last 7 days, today as rightmost
+    const result = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(sevenDaysAgo);
+      date.setDate(sevenDaysAgo.getDate() + i);
+      const dateKey = date.toISOString().split('T')[0];
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+      
+      result.push({
+        day: dayName,
+        date: dateKey,
+        sales: Math.round(salesByDate[dateKey]?.sales || 0),
+        orders: salesByDate[dateKey]?.orders || 0
+      });
+    }
+    
+    return result;
+  }, [adminData.dailySales]);
 
-  const weeklySalesData = [
-    { day: "Mon", sales: 850, orders: 67 },
-    { day: "Tue", sales: 920, orders: 72 },
-    { day: "Wed", sales: 1100, orders: 89 },
-    { day: "Thu", sales: 1250, orders: 95 },
-    { day: "Fri", sales: 1450, orders: 108 },
-    { day: "Sat", sales: 1680, orders: 125 },
-    { day: "Sun", sales: 1200, orders: 89 }
-  ];
+  // Calculate weekly sales by day of week for last 7 days (today as rightmost)
+  const weeklySalesByDay = useMemo(() => {
+    if (!adminData.dailySales.length) return [];
+    
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 6); // 7 days including today
+    
+    const salesByDate: { [key: string]: { sales: number; orders: number } } = {};
+    
+    // Initialize all 7 days with 0
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(sevenDaysAgo);
+      date.setDate(sevenDaysAgo.getDate() + i);
+      const dateKey = date.toISOString().split('T')[0];
+      salesByDate[dateKey] = { sales: 0, orders: 0 };
+    }
+    
+    // Filter sales from last 7 days
+    adminData.dailySales.forEach(sale => {
+      const saleDate = new Date(sale.sales_date);
+      if (saleDate >= sevenDaysAgo && saleDate <= today) {
+        const dateKey = sale.sales_date.split('T')[0];
+        if (salesByDate[dateKey]) {
+          salesByDate[dateKey].sales += sale.gross_sales;
+          salesByDate[dateKey].orders += sale.customer_count;
+        }
+      }
+    });
+    
+    // Create array with last 7 days, today as rightmost
+    const result = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(sevenDaysAgo);
+      date.setDate(sevenDaysAgo.getDate() + i);
+      const dateKey = date.toISOString().split('T')[0];
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+      
+      result.push({
+        day: dayName,
+        date: dateKey,
+        sales: Math.round(salesByDate[dateKey]?.sales || 0),
+        orders: salesByDate[dateKey]?.orders || 0
+      });
+    }
+    
+    return result;
+  }, [adminData.dailySales]);
 
-  const recentOrders = [
-    { id: "#001", customer: "Sarah Johnson", items: "Cappuccino, Croissant", total: "$12.50", status: "Completed", time: "2 min ago" },
-    { id: "#002", customer: "Mike Chen", items: "Americano, Muffin", total: "$8.75", status: "In Progress", time: "5 min ago" },
-    { id: "#003", customer: "Emma Davis", items: "Latte, Bagel", total: "$10.25", status: "Completed", time: "8 min ago" },
-    { id: "#004", customer: "Alex Rodriguez", items: "Espresso, Danish", total: "$9.50", status: "Pending", time: "12 min ago" },
-    { id: "#005", customer: "Lisa Wang", items: "Cold Brew, Sandwich", total: "$14.00", status: "Completed", time: "15 min ago" },
-    { id: "#006", customer: "David Kim", items: "Frappuccino, Cookie", total: "$11.75", status: "In Progress", time: "18 min ago" }
-  ];
+  // Transform daily sales to recent orders format
+  const recentOrders = useMemo(() => {
+    return adminData.dailySales.slice(0, 6).map((sale, index) => ({
+      id: `#${String(index + 1).padStart(3, '0')}`,
+      customer: `${sale.customer_count} customers`,
+      items: "Daily sales",
+      total: `$${sale.gross_sales.toFixed(2)}`,
+      status: "Completed",
+      time: new Date(sale.sales_date).toLocaleDateString()
+    }));
+  }, [adminData.dailySales]);
 
+  // Note: Individual product sales data not available in current structure
   const topSellingItems = [
-    { name: "Cappuccino", sales: 45, revenue: "$337.50", growth: "+12%" },
-    { name: "Americano", sales: 38, revenue: "$285.00", growth: "+8%" },
-    { name: "Latte", sales: 32, revenue: "$320.00", growth: "+15%" },
-    { name: "Cold Brew", sales: 28, revenue: "$196.00", growth: "+22%" },
-    { name: "Espresso", sales: 25, revenue: "$125.00", growth: "+5%" }
+    { name: "Daily Sales", sales: adminData.dailySales.length, revenue: `$${adminData.stats.totalRevenue.toFixed(2)}`, growth: "All-time total" },
+    { name: "Note", sales: 0, revenue: "Individual product data", growth: "Not tracked" }
   ];
 
   const getStatusColor = (status: string) => {
@@ -66,6 +165,37 @@ const Sales = () => {
       default: return "bg-gray-100 text-gray-800";
     }
   };
+
+  // Show loading state
+  if (adminData.isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
+          <p className="mt-4 text-lg text-slate-600">Loading sales data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (adminData.error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-600 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Error Loading Data</h2>
+          <p className="text-slate-600 mb-4">{adminData.error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -100,16 +230,16 @@ const Sales = () => {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Hourly Sales Chart */}
+            {/* Weekly Sales by Day Chart */}
             <Card className="border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-slate-800">Today's Hourly Sales</CardTitle>
+                <CardTitle className="text-xl font-bold text-slate-800">Weekly Sales by Day</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={hourlySalesData}>
+                  <BarChart data={weeklySalesByDay}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="hour" />
+                    <XAxis dataKey="day" />
                     <YAxis />
                     <Tooltip />
                     <Bar dataKey="sales" fill="#F59E0B" radius={[4, 4, 0, 0]} />

@@ -3,6 +3,7 @@ import { TooltipProvider } from './components/ui/tooltip'
 import { SidebarProvider } from './components/ui/sidebar'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './contexts/AuthContext'
+import { AdminProvider } from './contexts/AdminContext'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { AuthPage } from './components/auth/AuthPage'
 import LandingPage from './pages/LandingPage'
@@ -61,9 +62,11 @@ function App() {
           } />
           <Route path="/admin" element={
             <ProtectedRoute requireAuth={true}>
-              <SidebarProvider>
-                <DashboardLayout />
-              </SidebarProvider>
+              <AdminProvider>
+                <SidebarProvider>
+                  <DashboardLayout />
+                </SidebarProvider>
+              </AdminProvider>
             </ProtectedRoute>
           }>
             <Route index element={<Home />} />

@@ -24,9 +24,9 @@ export type Membership = {
   user_id: string;
   name?: string;
   email: string;
-  role: 'customer' | 'admin';
-  membership_type: 'basic' | 'premium' | 'vip';
-  status: 'active' | 'inactive' | 'cancelled';
+  role: string;
+  membership_type: string;
+  status: string;
   start_date: string;
   end_date?: string;
   created_at: string;
@@ -46,6 +46,26 @@ export type DailySale = {
   sales_date: string;
   customer_count: number;
   gross_sales: number;
+};
+
+export type WeeklyChallenge = {
+  id: string;
+  user_id: string;
+  challenge_name: string;
+  status: string;
+  photo_urls: string[];
+  submitted_at: string;
+  created_at: string;
+};
+
+export type UserProfile = {
+  id: string;
+  user_id: string;
+  name?: string;
+  email?: string;
+  avatar_url?: string;
+  created_at: string;
+  updated_at: string;
 };
 
 // Create Supabase client
