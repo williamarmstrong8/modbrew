@@ -3,23 +3,88 @@ import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { Receipt, TrendingDown, AlertTriangle, Plus, CreditCard, Building } from "lucide-react";
+import { Receipt, TrendingDown, Plus, Building, TrendingUp } from "lucide-react";
+import { useAdminContext } from "../contexts/AdminContext";
+import { useMemo } from "react";
 
 const Expenses = () => {
-  const expenseStats = [
-    { title: "Total Expenses", value: "$2,847", change: "+5% from last month", icon: Receipt, color: "text-red-600" },
-    { title: "This Month", value: "$1,234", change: "-$120 from last month", icon: TrendingDown, color: "text-green-600" },
-    { title: "Pending Bills", value: "$456", change: "3 bills due soon", icon: AlertTriangle, color: "text-orange-600" },
-    { title: "Avg Daily Cost", value: "$41", change: "-$3 this week", icon: Building, color: "text-blue-600" }
-  ];
+  const { adminData } = useAdminContext();
 
-  const expenseCategories = [
-    { name: "Supplies", amount: 850, percentage: 30, color: "#8B5CF6" },
-    { name: "Rent", amount: 1200, percentage: 42, color: "#3B82F6" },
-    { name: "Utilities", amount: 320, percentage: 11, color: "#10B981" },
-    { name: "Equipment", amount: 280, percentage: 10, color: "#F59E0B" },
-    { name: "Marketing", amount: 197, percentage: 7, color: "#EF4444" }
-  ];
+  // Calculate real expense stats
+  const expenseStats = useMemo(() => {
+    const totalExpenses = adminData.stats.totalExpenses;
+    const thisMonth = new Date().getMonth();
+    const thisYear = new Date().getFullYear();
+    
+    // Calculate this month's expenses
+    const thisMonthExpenses = adminData.expenses
+      .filter(expense => {
+        const expenseDate = new Date(expense.purchased_at);
+        return expenseDate.getMonth() === thisMonth && expenseDate.getFullYear() === thisYear;
+      })
+      .reduce((sum, expense) => sum + expense.price, 0);
+    
+    // Calculate average daily cost (monthly expenses divided by 4)
+    const avgDailyCost = thisMonthExpenses / 4;
+    
+    // Calculate each person's share of profit
+    const eachPersonGets = adminData.stats.totalProfit / 3;
+
+    return [
+      { 
+        title: "Total Expenses", 
+        value: `$${totalExpenses.toFixed(2)}`, 
+        change: "All-time total", 
+        icon: Receipt, 
+        color: "text-red-600" 
+      },
+      { 
+        title: "This Month", 
+        value: `$${thisMonthExpenses.toFixed(2)}`, 
+        change: "Current month", 
+        icon: TrendingDown, 
+        color: "text-green-600" 
+      },
+      { 
+        title: "Avg Daily Cost", 
+        value: `$${avgDailyCost.toFixed(2)}`, 
+        change: "Monthly ÷ 4", 
+        icon: Building, 
+        color: "text-blue-600" 
+      },
+      { 
+        title: "Each Person Gets", 
+        value: `$${eachPersonGets.toFixed(2)}`, 
+        change: "Profit split 3 ways", 
+        icon: TrendingUp, 
+        color: eachPersonGets >= 0 ? "text-green-600" : "text-red-600" 
+      }
+    ];
+  }, [adminData.expenses, adminData.stats.totalExpenses, adminData.stats.totalProfit]);
+
+  // Calculate expenses by purchaser (Mary, Will, Ben)
+  const expenseCategories = useMemo(() => {
+    const expensesByPurchaser: { [key: string]: number } = {
+      'mary': 0,
+      'will': 0,
+      'ben': 0
+    };
+    
+    adminData.expenses.forEach(expense => {
+      expensesByPurchaser[expense.purchaser] += expense.price;
+    });
+    
+    const total = Object.values(expensesByPurchaser).reduce((sum, amount) => sum + amount, 0);
+    
+    return Object.entries(expensesByPurchaser)
+      .filter(([_, amount]) => amount > 0)
+      .map(([purchaser, amount]) => ({
+        name: purchaser.charAt(0).toUpperCase() + purchaser.slice(1),
+        amount: Math.round(amount),
+        percentage: total > 0 ? Math.round((amount / total) * 100) : 0,
+        color: purchaser === 'mary' ? '#8B5CF6' : purchaser === 'will' ? '#3B82F6' : '#10B981'
+      }));
+  }, [adminData.expenses]);
 
   const monthlyExpenses = [
     { month: "Jan", amount: 2100, budget: 2500 },
@@ -30,21 +95,20 @@ const Expenses = () => {
     { month: "Jun", amount: 2347, budget: 2500 }
   ];
 
-  const recentExpenses = [
-    { id: "EXP-001", description: "Coffee beans - Premium blend", amount: "$245.00", category: "Supplies", date: "2024-01-15", status: "Paid", vendor: "Bean Supply Co." },
-    { id: "EXP-002", description: "Monthly rent payment", amount: "$1,200.00", category: "Rent", date: "2024-01-01", status: "Paid", vendor: "Property Management" },
-    { id: "EXP-003", description: "Electricity bill", amount: "$156.75", category: "Utilities", date: "2024-01-10", status: "Paid", vendor: "City Electric" },
-    { id: "EXP-004", description: "Espresso machine maintenance", amount: "$89.50", category: "Equipment", date: "2024-01-12", status: "Paid", vendor: "Coffee Tech Services" },
-    { id: "EXP-005", description: "Social media advertising", amount: "$125.00", category: "Marketing", date: "2024-01-14", status: "Pending", vendor: "Meta Ads" },
-    { id: "EXP-006", description: "Milk and cream delivery", amount: "$78.25", category: "Supplies", date: "2024-01-16", status: "Paid", vendor: "Dairy Direct" }
-  ];
+  // Transform real expenses data
+  const recentExpenses = useMemo(() => {
+    return adminData.expenses.slice(0, 6).map((expense, index) => ({
+      id: `EXP-${String(index + 1).padStart(3, '0')}`,
+      description: expense.item_name,
+      amount: `$${expense.price.toFixed(2)}`,
+      category: expense.purchaser.charAt(0).toUpperCase() + expense.purchaser.slice(1),
+      date: new Date(expense.purchased_at).toLocaleDateString(),
+      status: "Paid",
+      vendor: expense.purchaser.charAt(0).toUpperCase() + expense.purchaser.slice(1)
+    }));
+  }, [adminData.expenses]);
 
-  const upcomingBills = [
-    { description: "Internet service", amount: "$89.99", dueDate: "Jan 20, 2024", category: "Utilities" },
-    { description: "Insurance premium", amount: "$156.00", dueDate: "Jan 25, 2024", category: "Insurance" },
-    { description: "Water bill", amount: "$67.50", dueDate: "Jan 28, 2024", category: "Utilities" },
-    { description: "Coffee grinder repair", amount: "$125.00", dueDate: "Feb 1, 2024", category: "Equipment" }
-  ];
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -55,19 +119,40 @@ const Expenses = () => {
     }
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "Supplies": return "bg-purple-100 text-purple-800";
-      case "Rent": return "bg-blue-100 text-blue-800";
-      case "Utilities": return "bg-green-100 text-green-800";
-      case "Equipment": return "bg-amber-100 text-amber-800";
-      case "Marketing": return "bg-red-100 text-red-800";
-      case "Insurance": return "bg-indigo-100 text-indigo-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
+
 
   const COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+
+  // Show loading state
+  if (adminData.isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
+          <p className="mt-4 text-lg text-slate-600">Loading expenses data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (adminData.error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-600 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Error Loading Data</h2>
+          <p className="text-slate-600 mb-4">{adminData.error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -103,15 +188,15 @@ const Expenses = () => {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="recent">Recent Expenses</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming Bills</TabsTrigger>
+          <TabsTrigger value="payout">Payout</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Expense Categories Pie Chart */}
+            {/* Expenses by Purchaser Pie Chart */}
             <Card className="border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-slate-800">Expense Categories</CardTitle>
+                <CardTitle className="text-xl font-bold text-slate-800">Expenses by Purchaser</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -180,7 +265,7 @@ const Expenses = () => {
                       <div className="flex items-center space-x-2">
                         <p className="font-medium text-slate-800">{expense.id}</p>
                         <Badge className={getStatusColor(expense.status)}>{expense.status}</Badge>
-                        <Badge className={getCategoryColor(expense.category)}>{expense.category}</Badge>
+                        <Badge className="bg-blue-100 text-blue-800">{expense.category}</Badge>
                       </div>
                       <p className="text-sm text-slate-600">{expense.description}</p>
                       <p className="text-sm text-slate-500">{expense.vendor} • {expense.date}</p>
@@ -195,31 +280,126 @@ const Expenses = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="upcoming" className="space-y-6">
+        <TabsContent value="payout" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Profit Summary */}
+            <Card className="border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-slate-800">Profit Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <p className="text-sm text-green-600 font-medium">Total Revenue</p>
+                    <p className="text-2xl font-bold text-green-700">${adminData.stats.totalRevenue.toFixed(2)}</p>
+                  </div>
+                  <div className="text-center p-4 bg-red-50 rounded-lg">
+                    <p className="text-sm text-red-600 font-medium">Total Expenses</p>
+                    <p className="text-2xl font-bold text-red-700">${adminData.stats.totalExpenses.toFixed(2)}</p>
+                  </div>
+                </div>
+                <div className="text-center p-6 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-600 font-medium">Net Profit</p>
+                  <p className={`text-3xl font-bold ${adminData.stats.totalProfit >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
+                    ${adminData.stats.totalProfit.toFixed(2)}
+                  </p>
+                  <p className="text-sm text-blue-600 mt-1">
+                    {adminData.stats.totalProfit >= 0 ? 'Available for distribution' : 'Loss - no payout'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* All-Time Payout Breakdown */}
+            <Card className="border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-slate-800">All-Time Payout Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(() => {
+                  // Calculate all-time revenue
+                  const allTimeRevenue = adminData.stats.totalRevenue;
+                  
+                  // Calculate all-time expenses
+                  const allTimeExpenses = adminData.stats.totalExpenses;
+                  
+                  const allTimeProfit = allTimeRevenue - allTimeExpenses;
+                  const individualPayout = allTimeProfit / 3;
+                  
+                  return (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                          <p className="text-sm text-green-600 font-medium">All-Time Revenue</p>
+                          <p className="text-lg font-bold text-green-700">${allTimeRevenue.toFixed(2)}</p>
+                        </div>
+                        <div className="text-center p-3 bg-red-50 rounded-lg">
+                          <p className="text-sm text-red-600 font-medium">All-Time Expenses</p>
+                          <p className="text-lg font-bold text-red-700">${allTimeExpenses.toFixed(2)}</p>
+                        </div>
+                      </div>
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-600 font-medium">All-Time Profit</p>
+                        <p className={`text-xl font-bold ${allTimeProfit >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
+                          ${allTimeProfit.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-purple-50 rounded-lg">
+                        <p className="text-sm text-purple-600 font-medium">Each Person Gets</p>
+                        <p className={`text-xl font-bold ${individualPayout >= 0 ? 'text-purple-700' : 'text-red-700'}`}>
+                          ${individualPayout.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-purple-600 mt-1">Split 3 ways</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Team Member Expense Summary */}
           <Card className="border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-slate-800">Upcoming Bills</CardTitle>
+              <CardTitle className="text-xl font-bold text-slate-800">Team Member Expense Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {upcomingBills.map((bill, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <p className="font-medium text-slate-800">{bill.description}</p>
-                        <Badge className={getCategoryColor(bill.category)}>{bill.category}</Badge>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {(() => {
+                  const expensesByPurchaser: { [key: string]: number } = {
+                    'mary': 0,
+                    'will': 0,
+                    'ben': 0
+                  };
+                  
+                  adminData.expenses.forEach(expense => {
+                    expensesByPurchaser[expense.purchaser] += expense.price;
+                  });
+                  
+                  return Object.entries(expensesByPurchaser).map(([purchaser, totalExpenses]) => {
+                    const purchaserName = purchaser.charAt(0).toUpperCase() + purchaser.slice(1);
+                    
+                    return (
+                      <div key={purchaser} className="text-center p-4 bg-slate-50 rounded-lg">
+                        <h3 className="font-semibold text-slate-800 mb-3">{purchaserName}</h3>
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-sm text-slate-600">Total Expenses</p>
+                            <p className="text-lg font-bold text-slate-800">${totalExpenses.toFixed(2)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-600">Profit Split</p>
+                            <p className="text-lg font-bold text-green-700">${(adminData.stats.totalProfit / 3).toFixed(2)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-600">Team Payout</p>
+                            <p className="text-lg font-bold text-blue-700">${(totalExpenses + (adminData.stats.totalProfit / 3)).toFixed(2)}</p>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm text-slate-500">Due: {bill.dueDate}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-slate-800">{bill.amount}</p>
-                      <Button variant="outline" size="sm" className="mt-1">
-                        <CreditCard className="w-3 h-3 mr-1" />
-                        Pay Now
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  });
+                })()}
               </div>
             </CardContent>
           </Card>

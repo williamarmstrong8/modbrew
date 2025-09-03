@@ -2,9 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
-import { Users, DollarSign, Coffee, TrendingUp, UserPlus, Minus } from "lucide-react";
+import { Users, DollarSign, TrendingUp, UserPlus, Minus } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "../lib/supabase";
+import { useAdminContext } from "../contexts/AdminContext";
 import { toast } from "sonner";
 
 const Home = () => {
@@ -27,30 +27,25 @@ const Home = () => {
   const [expenseItem, setExpenseItem] = useState("");
   const [expensePrice, setExpensePrice] = useState("");
 
+  // Use AdminContext for data
+  const { adminData, addDailySale, addExpense } = useAdminContext();
+
   const handleAddDailySales = async () => {
     const customerCountNum = parseInt(customerCount);
     const grossSalesNum = parseFloat(grossSales);
     
     if (!isNaN(customerCountNum) && customerCountNum > 0 && !isNaN(grossSalesNum) && grossSalesNum > 0) {
       try {
-        const { error } = await supabase
-          .from('daily_sales')
-          .insert({
-            sales_date: salesDate,
-            customer_count: customerCountNum,
-            gross_sales: grossSalesNum
-          });
-
-        if (error) {
-          toast.error('Error adding daily sales: ' + error.message);
-        } else {
-          toast.success('Daily sales added successfully!');
-          setCustomerCount("");
-          setGrossSales("");
-        }
+        await addDailySale({
+          sales_date: salesDate,
+          customer_count: customerCountNum,
+          gross_sales: grossSalesNum
+        });
+        
+        setCustomerCount("");
+        setGrossSales("");
       } catch (error) {
-        toast.error('Error adding daily sales');
-        console.error('Error:', error);
+        console.error('Error adding daily sales:', error);
       }
     } else {
       toast.error('Please enter valid numbers for customer count and gross sales');
@@ -62,26 +57,18 @@ const Home = () => {
     
     if (expenseName.trim() && expenseItem.trim() && !isNaN(price) && price > 0) {
       try {
-        const { error } = await supabase
-          .from('expenses')
-          .insert({
-            purchased_at: expenseDate + 'T00:00:00Z', // Convert date to timestamp
-            item_name: `${expenseName.trim()} - ${expenseItem.trim()}`, // Combine name and item
-            price: price,
-            purchaser: 'will' // Default purchaser, you can modify this logic
-          });
-
-        if (error) {
-          toast.error('Error adding expense: ' + error.message);
-        } else {
-          toast.success('Expense added successfully!');
-          setExpenseName("");
-          setExpenseItem("");
-          setExpensePrice("");
-        }
+        await addExpense({
+          purchased_at: expenseDate + 'T00:00:00Z', // Convert date to timestamp
+          item_name: `${expenseName.trim()} - ${expenseItem.trim()}`, // Combine name and item
+          price: price,
+          purchaser: 'will' // Default purchaser, you can modify this logic
+        });
+        
+        setExpenseName("");
+        setExpenseItem("");
+        setExpensePrice("");
       } catch (error) {
-        toast.error('Error adding expense');
-        console.error('Error:', error);
+        console.error('Error adding expense:', error);
       }
     } else {
       toast.error('Please fill in all fields with valid values');
@@ -90,32 +77,32 @@ const Home = () => {
 
   const stats = [
     { 
-      title: "Today's Revenue", 
-      value: "$1,247", 
-      change: "+12% from yesterday", 
+      title: "Total Revenue", 
+      value: `$${adminData.stats.totalRevenue.toFixed(2)}`, 
+      change: adminData.stats.totalRevenue > 0 ? "All-time total" : "No sales recorded", 
       icon: DollarSign, 
       color: "text-green-600" 
     },
     { 
-      title: "Active Customers", 
-      value: "89", 
-      change: "+5 new today", 
+      title: "Total Customers", 
+      value: adminData.stats.totalCustomers.toString(), 
+      change: adminData.stats.totalCustomers > 0 ? "From sales data" : "No customers recorded", 
       icon: Users, 
       color: "text-blue-600" 
     },
     { 
-      title: "Cups Served", 
-      value: "234", 
-      change: "Peak: 2:30 PM", 
-      icon: Coffee, 
-      color: "text-amber-600" 
+      title: "Total Members", 
+      value: adminData.stats.totalMembers.toString(), 
+      change: adminData.stats.totalMembers > 0 ? "All-time total" : "No members recorded", 
+      icon: UserPlus, 
+      color: "text-purple-600" 
     },
     { 
-      title: "Avg Order Value", 
-      value: "$8.50", 
-      change: "+$0.75 this week", 
+      title: "Total Profit", 
+      value: `$${adminData.stats.totalProfit.toFixed(2)}`, 
+      change: adminData.stats.totalProfit > 0 ? "Revenue - Expenses" : "No profit recorded", 
       icon: TrendingUp, 
-      color: "text-purple-600" 
+      color: adminData.stats.totalProfit >= 0 ? "text-green-600" : "text-red-600" 
     }
   ];
 
@@ -136,22 +123,53 @@ const Home = () => {
     },
   ];
 
-  const recentOrders = [
-    { id: "#001", customer: "Sarah Johnson", items: "Cappuccino, Croissant", total: "$12.50", time: "2 min ago" },
-    { id: "#002", customer: "Mike Chen", items: "Americano, Muffin", total: "$8.75", time: "5 min ago" },
-    { id: "#003", customer: "Emma Davis", items: "Latte, Bagel", total: "$10.25", time: "8 min ago" },
-    { id: "#004", customer: "Alex Rodriguez", items: "Espresso, Danish", total: "$9.50", time: "12 min ago" },
-    { id: "#005", customer: "Lisa Wang", items: "Cold Brew, Sandwich", total: "$14.00", time: "15 min ago" },
-  ];
+  const recentOrders = adminData.dailySales.slice(0, 5).map((sale, index) => ({
+    id: `#${String(index + 1).padStart(3, '0')}`,
+    customer: `${sale.customer_count} customers`,
+    items: `Daily sales`,
+    total: `$${sale.gross_sales.toFixed(2)}`,
+    time: new Date(sale.sales_date).toLocaleDateString()
+  }));
 
 
+
+  // Show loading state
+  if (adminData.isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
+          <p className="mt-4 text-lg text-slate-600">Loading your business data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (adminData.error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-600 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Error Loading Data</h2>
+          <p className="text-slate-600 mb-4">{adminData.error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-slate-800">Good morning! ☕</h1>
-        <p className="text-slate-600">Here's what's happening at Mod Brew today.</p>
+        <h1 className="text-3xl font-bold text-slate-800">Welcome to Mod Brew! ☕</h1>
+        <p className="text-slate-600">Here's your business overview with live data from your database.</p>
       </div>
 
       {/* Stats Grid */}
