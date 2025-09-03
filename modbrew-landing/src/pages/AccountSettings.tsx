@@ -196,19 +196,13 @@ export default function AccountSettings() {
               <Button
                 variant="ghost"
                 onClick={() => navigate('/brewery')}
-                className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 p-2"
+                className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Hub
               </Button>
-              <Separator orientation="vertical" className="h-6 bg-white/20 hidden sm:block" />
-              <motion.img 
-                src="/images/Mod Brew Long.png" 
-                alt="ModBrew" 
-                className="h-6 w-auto sm:h-8"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.2 }}
-              />
-              <Separator orientation="vertical" className="h-6 bg-white/20 hidden sm:block" />
+              <Separator orientation="vertical" className="h-6 bg-white/20" />
+              <h1 className="text-lg font-light tracking-wide">Account Settings</h1>
             </div>
           </div>
         </div>

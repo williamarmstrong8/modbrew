@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
@@ -153,6 +153,11 @@ export default function BrowseCoffee() {
   const [selectedCoffee, setSelectedCoffee] = useState<CoffeeItem | null>(null)
 
   const allCoffees = coffeeMenu
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const getRoastColor = (roast: string) => {
     switch (roast) {
@@ -322,35 +327,7 @@ export default function BrowseCoffee() {
             ))}
           </motion.div>
 
-          {/* Contact Section */}
-          <motion.div
-            key="contact-section"
-            className="mt-16 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
-          >
-            <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-light text-white mb-4">Want to Try These Coffees?</h3>
-                <p className="text-white/60 font-light mb-6">
-                  Visit our cafe to experience these premium coffees in person. 
-                  Our baristas are experts in brewing each blend to perfection.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                  <div className="flex items-center space-x-2 text-white/80">
-                    <span>Visit our cafe</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-white/80">
-                    <span>Call (555) 123-4567</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-white/80">
-                    <span>Open daily 7AM-7PM</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+
         </AnimatePresence>
       </div>
 

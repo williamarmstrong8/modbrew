@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Separator } from '../components/ui/separator'
+import { ImageModal } from '../components/ui/image-modal'
 import { 
   ArrowLeft,
   Image
@@ -24,8 +26,15 @@ export default function ChallengeSubmissions() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [images, setImages] = useState<SubmissionImage[]>([])
+  const [allImages, setAllImages] = useState<SubmissionImage[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedImage, setSelectedImage] = useState<SubmissionImage | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [participantCount, setParticipantCount] = useState(0)
+  const [imagesLoaded, setImagesLoaded] = useState(0)
+  const [displayedCount, setDisplayedCount] = useState(15)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -33,13 +42,175 @@ export default function ChallengeSubmissions() {
       return
     }
 
+    // Check if we have cached data in sessionStorage (persists during browser session)
+    const cachedData = sessionStorage.getItem('challengeSubmissions')
+    const cachedParticipantCount = sessionStorage.getItem('challengeParticipantCount')
+    
+    if (cachedData && cachedParticipantCount) {
+      try {
+        const parsedData = JSON.parse(cachedData)
+        setAllImages(parsedData)
+        setImages(parsedData.slice(0, displayedCount))
+        setParticipantCount(parseInt(cachedParticipantCount))
+        
+        // For cached data, we need to verify all images are truly ready
+        // Wait for next tick to ensure images are in DOM, then check readiness
+        setTimeout(() => {
+          const imageElements = document.querySelectorAll('img[src]')
+          let readyImages = 0
+          
+          const checkAllImagesReady = () => {
+            readyImages = 0
+            imageElements.forEach((img) => {
+              const imgElement = img as HTMLImageElement
+              if (imgElement.complete && imgElement.naturalWidth > 0 && imgElement.naturalHeight > 0) {
+                readyImages++
+              }
+            })
+            
+            if (readyImages === Math.min(parsedData.length, displayedCount)) {
+              // All displayed images are ready
+              setImagesLoaded(Math.min(parsedData.length, displayedCount))
+              setLoading(false)
+            } else {
+              // Some images not ready yet, check again
+              setTimeout(checkAllImagesReady, 100)
+            }
+          }
+          
+          checkAllImagesReady()
+        }, 100)
+        
+        return // Exit early, don't fetch fresh data
+      } catch (err) {
+        console.error('Error parsing cached data:', err)
+        // If parsing fails, clear cache and fetch fresh data
+        sessionStorage.removeItem('challengeSubmissions')
+        sessionStorage.removeItem('challengeParticipantCount')
+      }
+    }
+
+    // No cached data or parsing failed, fetch fresh data
     fetchSubmissions()
   }, [user, navigate])
+
+  // Handle page visibility changes (when user swipes away and back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Page became visible again, check if we need to reset loading state
+        if (images.length > 0 && imagesLoaded === images.length) {
+          setLoading(false)
+        } else if (images.length === 0) {
+          setLoading(false)
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [images.length, imagesLoaded])
+
+  // Clear cache when component unmounts (user navigates away)
+  useEffect(() => {
+    return () => {
+      // Clear sessionStorage when leaving the page
+      sessionStorage.removeItem('challengeSubmissions')
+      sessionStorage.removeItem('challengeParticipantCount')
+    }
+  }, [])
+
+  // Track when all images are loaded
+  useEffect(() => {
+    if (images.length > 0 && imagesLoaded === images.length) {
+      // All images loaded, wait a bit more for smooth transition
+      setTimeout(() => setLoading(false), 500)
+    } else if (images.length === 0) {
+      // No images to load, hide loading after a short delay
+      setTimeout(() => setLoading(false), 300)
+    }
+  }, [imagesLoaded, images.length])
+
+  const handleImageLoad = () => {
+    setImagesLoaded(prev => prev + 1)
+  }
+
+  const loadMoreImages = () => {
+    if (displayedCount >= allImages.length) return
+    
+    setLoadingMore(true)
+    const nextBatch = allImages.slice(displayedCount, displayedCount + 15)
+    setImages(prev => [...prev, ...nextBatch])
+    setDisplayedCount(prev => prev + 15)
+    setImagesLoaded(prev => prev + nextBatch.length)
+    setLoadingMore(false)
+  }
+
+  const hasMoreImages = displayedCount < allImages.length
+
+  const fetchParticipantCount = async () => {
+    try {
+      const { data: challenges, error } = await supabase
+        .from('weekly_challenges')
+        .select('*')
+
+      if (error) {
+        console.error('Error fetching participant count:', error)
+        return
+      }
+
+      // Count unique participants (filter out null/undefined user_ids)
+      const validUserIds = challenges?.filter(challenge => challenge.user_id && challenge.user_id !== '') || []
+      
+      // Extract user IDs and count unique participants
+      const userIds = validUserIds.map(challenge => challenge.user_id)
+      const uniqueParticipants = new Set(userIds)
+      const count = uniqueParticipants.size
+      
+      setParticipantCount(count)
+      
+      return count // Return the count for caching
+      
+    } catch (err) {
+      console.error('Error fetching participant count:', err)
+      return 0
+    }
+  }
+
+  const openImageModal = (image: SubmissionImage) => {
+    setSelectedImage(image)
+    setIsModalOpen(true)
+  }
+
+  const closeImageModal = () => {
+    setIsModalOpen(false)
+    setSelectedImage(null)
+  }
+
+  const goToPrevious = () => {
+    if (!selectedImage) return
+    const currentIndex = images.findIndex(img => img.id === selectedImage.id)
+    if (currentIndex > 0) {
+      setSelectedImage(images[currentIndex - 1])
+    }
+  }
+
+  const goToNext = () => {
+    if (!selectedImage) return
+    const currentIndex = images.findIndex(img => img.id === selectedImage.id)
+    if (currentIndex < images.length - 1) {
+      setSelectedImage(images[currentIndex + 1])
+    }
+  }
+
+  const hasPrevious = selectedImage ? images.findIndex(img => img.id === selectedImage.id) > 0 : false
+  const hasNext = selectedImage ? images.findIndex(img => img.id === selectedImage.id) < images.length - 1 : false
 
   const fetchSubmissions = async () => {
     try {
       setLoading(true)
       setError(null)
+      setImagesLoaded(0) // Reset image load counter for new images
 
       // List all files in the modbrew-5 bucket (no subfolders)
       const { data: files, error: listError } = await supabase.storage
@@ -91,14 +262,26 @@ export default function ChallengeSubmissions() {
           })
       )
 
-      setImages(submissionImages)
+      setAllImages(submissionImages)
+      setImages(submissionImages.slice(0, displayedCount))
+      
+      // Fetch and cache participant count along with images
+      fetchParticipantCount().then((count) => {
+        if (count !== undefined) {
+          // Cache both images and participant count together
+          sessionStorage.setItem('challengeSubmissions', JSON.stringify(submissionImages))
+          sessionStorage.setItem('challengeParticipantCount', count.toString())
+        }
+      })
+      
     } catch (err) {
       console.error('Error fetching submissions:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch submissions')
     } finally {
-      setLoading(false)
+      // Loading will be controlled by the useEffect hook
     }
   }
+
 
 
 
@@ -137,14 +320,18 @@ export default function ChallengeSubmissions() {
       <div className="relative z-10 container mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-12">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/brewery')}
-            className="mb-6 text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Brewery
-          </Button>
+          <div className="flex items-center space-x-6 mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/brewery')}
+              className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Hub
+            </Button>
+            <Separator orientation="vertical" className="h-6 bg-white/20" />
+            <h1 className="text-lg font-light tracking-wide">Challenge Submissions</h1>
+          </div>
           
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
@@ -165,12 +352,12 @@ export default function ChallengeSubmissions() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center p-6 bg-white/5 rounded-lg border border-white/10">
-                <div className="text-3xl font-light text-white mb-2">{images.length}</div>
+                <div className="text-3xl font-light text-white mb-2">{allImages.length}</div>
                 <div className="text-white/60 font-light">Total Photos</div>
               </div>
               <div className="text-center p-6 bg-white/5 rounded-lg border border-white/10">
                 <div className="text-3xl font-light text-white mb-2">
-                  {new Set(images.map(img => img.user_id)).size}
+                  {participantCount}
                 </div>
                 <div className="text-white/60 font-light">Participants</div>
               </div>
@@ -193,31 +380,53 @@ export default function ChallengeSubmissions() {
 
         {/* Images Grid */}
         {images.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {images.map((image, index) => (
-              <motion.div
-                key={image.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group"
-              >
-                <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override overflow-hidden hover:bg-white/10 transition-all duration-300">
-                  <div className="aspect-square overflow-hidden">
-                    <img
-                      src={image.url}
-                      alt={image.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        const img = e.target as HTMLImageElement
-                        img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjMzM0MTU1Ii8+CjxwYXRoIGQ9Ik0xMDAgMTMwQzExNi41NjkgMTMwIDEzMCAxMTYuNTY5IDEzMCAxMDBDMTMwIDgzLjQzMTUgMTE2LjU2OSA3MCAxMDAgNzBDODMuNDMxNSA3MCA3MCA4My40MzE1IDcwIDEwMEM3MCAxMTYuNTY5IDgzLjQzMTUgMTMwIDEwMCAxMzBaIiBmaWxsPSIjN0MzQ1QwIi8+CjxwYXRoIGQ9Ik0xMDAgMTQwQzExNi41NjkgMTQwIDEzMCAxMzYuNTY5IDEzMCAxMzNDMTMwIDEyOS40MzEgMTE2LjU2OSAxMjYgMTAwIDEyNkM4My40MzE1IDEyNiA3MCAxMjkuNDMxIDcwIDEzM0M3MCAxMzYuNTY5IDgzLjQzMTUgMTQwIDEwMCAxNDB6IiBmaWxsPSIjN0MzNDVBMCIvPgo8L3N2Zz4K'
-                      }}
-                    />
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+              {images.map((image, index) => (
+                <motion.div
+                  key={image.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="group"
+                >
+                  <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override overflow-hidden hover:bg-white/10 transition-all duration-300">
+                    <div className="aspect-square overflow-hidden cursor-pointer relative group" onClick={() => openImageModal(image)}>
+                      <img
+                        src={image.url}
+                        alt={image.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement
+                          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjMzM0MTU1Ii8+CjxwYXRoIGQ9Ik0xMDAgMTMwQzExNi41NjkgMTMwIDEzMCAxMTYuNTY5IDEzMCAxMDBDMTMwIDgzLjQzMTUgMTE2LjU2kgMTMwIDEyNiAxMDAgMTI2QzgzLjQzMTUgNzAgNzAgMTI5LjQzMSA3MCAxMzNDNzAgMTM2LjU2OSA4My40MzE1IDE0MCAxMDAgMTQweiIgZmlsbD0iIzdDMzQ1QTAiLz4KPC9zdmc+Cg=='
+                        }}
+                        onLoad={handleImageLoad}
+                      />
+                      {/* Hover overlay with click indicator */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/20 backdrop-blur-sm rounded-full p-3">
+                          <Image className="h-6 w-6 text-white" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            {hasMoreImages && (
+              <div className="text-center mt-8">
+                <Button
+                  onClick={loadMoreImages}
+                  disabled={loadingMore}
+                  className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-3 text-lg font-light transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loadingMore ? 'Loading...' : 'Load More'}
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-16">
             <Image className="h-16 w-16 mx-auto mb-4 text-white/20" />
@@ -226,6 +435,17 @@ export default function ChallengeSubmissions() {
           </div>
         )}
       </div>
+      {selectedImage && (
+        <ImageModal
+          isOpen={isModalOpen}
+          onClose={closeImageModal}
+          image={selectedImage}
+          onPrevious={goToPrevious}
+          onNext={goToNext}
+          hasPrevious={hasPrevious}
+          hasNext={hasNext}
+        />
+      )}
     </div>
   )
 }
