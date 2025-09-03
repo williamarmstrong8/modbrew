@@ -97,7 +97,12 @@ const Expenses = () => {
 
   // Transform real expenses data
   const recentExpenses = useMemo(() => {
-    return adminData.expenses.slice(0, 6).map((expense, index) => ({
+    // Sort expenses by purchased_at date (most recent first) and take the first 6
+    const sortedExpenses = [...adminData.expenses]
+      .sort((a, b) => new Date(b.purchased_at).getTime() - new Date(a.purchased_at).getTime())
+      .slice(0, 6);
+    
+    return sortedExpenses.map((expense, index) => ({
       id: `EXP-${String(index + 1).padStart(3, '0')}`,
       description: expense.item_name,
       amount: `$${expense.price.toFixed(2)}`,

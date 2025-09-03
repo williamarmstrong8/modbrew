@@ -33,7 +33,7 @@ export default function ChallengeSubmissions() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [participantCount, setParticipantCount] = useState(0)
   const [imagesLoaded, setImagesLoaded] = useState(0)
-  const [loadingProgress, setLoadingProgress] = useState(0)
+
   const [displayedCount, setDisplayedCount] = useState(15)
   const [loadingMore, setLoadingMore] = useState(false)
   const [showContent, setShowContent] = useState(false)
@@ -54,54 +54,15 @@ export default function ChallengeSubmissions() {
         setAllImages(parsedData)
         setImages(parsedData.slice(0, displayedCount))
         setParticipantCount(parseInt(cachedParticipantCount))
-        setLoadingProgress(0) // Reset loading progress for cached data
+
         
-        // For cached data, also wait for images to load before hiding loading
+        // For cached data, just show the page immediately - no preloading needed
         if (parsedData.length > 0) {
-          const firstBatch = parsedData.slice(0, displayedCount)
-          console.log(`Loading cached data: waiting for ${firstBatch.length} images...`)
-          
-          // Wait for images to load
-          new Promise<void>((resolve) => {
-            let loadedCount = 0
-            const totalToLoad = firstBatch.length
-            
-            const handleImageLoad = () => {
-              loadedCount++
-              setLoadingProgress(loadedCount)
-              console.log(`Cached image loaded: ${loadedCount}/${totalToLoad}`)
-              
-              if (loadedCount >= totalToLoad) {
-                console.log('All cached images loaded successfully')
-                // Add a small delay to show the complete progress and allow smooth transition
-                setTimeout(() => resolve(), 500)
-              }
-            }
-            
-            // Preload all images in the first batch
-            firstBatch.forEach((image: SubmissionImage) => {
-              const img = new window.Image()
-              img.onload = handleImageLoad
-              img.onerror = () => {
-                console.warn(`Failed to load cached image: ${image.name}`)
-                handleImageLoad() // Count errors as loaded to avoid infinite waiting
-              }
-              img.src = image.url
-            })
-            
-            // Fallback: if images take too long, resolve anyway after 5 seconds
-            setTimeout(() => {
-              if (loadedCount < totalToLoad) {
-                console.warn(`Cache timeout reached, showing page with ${loadedCount}/${totalToLoad} images loaded`)
-                resolve()
-              }
-            }, 5000)
-                  }).then(() => {
+          console.log(`Using cached data: ${parsedData.length} images available`)
           setShowContent(true) // Trigger content animation
           setTimeout(() => {
             setLoading(false) // Hide loading after animation starts
           }, 200)
-        })
         } else {
           setLoading(false) // No images to load
         }
@@ -227,7 +188,6 @@ export default function ChallengeSubmissions() {
       setLoading(true)
       setError(null)
       setImagesLoaded(0) // Reset image load counter for new images
-      setLoadingProgress(0) // Reset loading progress for new images
 
       // List all files in the modbrew-5 bucket (no subfolders)
       const { data: files, error: listError } = await supabase.storage
@@ -291,48 +251,8 @@ export default function ChallengeSubmissions() {
         sessionStorage.setItem('challengeParticipantCount', participantCount.toString())
       }
       
-              // Now wait for all displayed images to be fully loaded before hiding loading
-        if (submissionImages.length > 0) {
-          const firstBatch = submissionImages.slice(0, displayedCount)
-          console.log(`Waiting for ${firstBatch.length} images to load...`)
-          
-          // Create a promise that resolves when all first batch images are loaded
-          await new Promise<void>((resolve) => {
-            let loadedCount = 0
-            const totalToLoad = firstBatch.length
-            
-            const handleImageLoad = () => {
-              loadedCount++
-              setLoadingProgress(loadedCount)
-              console.log(`Loaded ${loadedCount}/${totalToLoad} images`)
-              
-              if (loadedCount >= totalToLoad) {
-                console.log('All images loaded successfully')
-                // Add a small delay to show the complete progress and allow smooth transition
-                setTimeout(() => resolve(), 500)
-              }
-            }
-            
-            // Preload all images in the first batch
-            firstBatch.forEach((image) => {
-              const img = new window.Image()
-              img.onload = handleImageLoad
-              img.onerror = () => {
-                console.warn(`Failed to load image: ${image.name}`)
-                handleImageLoad() // Count errors as loaded to avoid infinite waiting
-              }
-              img.src = image.url
-            })
-            
-            // Fallback: if images take too long, resolve anyway after 10 seconds
-            setTimeout(() => {
-              if (loadedCount < totalToLoad) {
-                console.warn(`Timeout reached, showing page with ${loadedCount}/${totalToLoad} images loaded`)
-                resolve()
-              }
-            }, 10000)
-          })
-        }
+              // No preloading needed - images will load when displayed
+      console.log(`Fetched ${submissionImages.length} images - will load on demand`)
       
     } catch (err) {
       console.error('Error fetching submissions:', err)
@@ -369,21 +289,7 @@ export default function ChallengeSubmissions() {
         >
           <div className="text-center">
             <LoadingSpinner size="lg" text="Loading submissions..." />
-            {images.length > 0 && (
-              <div className="mt-4 text-white/60">
-                <p>Loading images... {loadingProgress}/{Math.min(images.length, displayedCount)}</p>
-                <div className="mt-2 w-48 bg-white/20 rounded-full h-2 overflow-hidden">
-                  <motion.div 
-                    className="bg-white/60 h-2 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ 
-                      width: `${Math.min(images.length, displayedCount) > 0 ? (loadingProgress / Math.min(images.length, displayedCount)) * 100 : 0}%` 
-                    }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                  />
-                </div>
-              </div>
-            )}
+
           </div>
         </motion.div>
       </div>
@@ -485,6 +391,7 @@ export default function ChallengeSubmissions() {
                         src={image.url}
                         alt={image.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
                         onError={(e) => {
                           const img = e.target as HTMLImageElement
                           img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjMzM0MTU1Ii8+CjxwYXRoIGQ9Ik0xMDAgMTMwQzExNi41NjkgMTMwIDEzMCAxMTYuNTY5IDEzMCAxMDBDMTMwIDgzLjQzMTUgMTE2LjU2kgMTMwIDEyNiAxMDAgMTI2QzgzLjQzMTUgNzAgNzAgMTI5LjQzMSA3MCAxMzNDNzAgMTM2LjU2OSA4My40MzE1IDE0MCAxMDAgMTQweiIgZmlsbD0iIzdDMzQ1QTAiLz4KPC9zdmc+Cg=='
