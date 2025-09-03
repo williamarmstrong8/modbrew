@@ -4,8 +4,6 @@ import {
   Users,
   DollarSign,
   Receipt,
-  Package,
-  BarChart3,
   Coffee,
 } from "lucide-react";
 import {
@@ -24,8 +22,6 @@ const menuItems = [
   { title: "Customers", url: "/admin/customers", icon: Users },
   { title: "Sales", url: "/admin/sales", icon: DollarSign },
   { title: "Expenses", url: "/admin/expenses", icon: Receipt },
-  { title: "Products", url: "/admin/products", icon: Package },
-  { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
 ];
 
 const breweryButton = {
@@ -37,12 +33,13 @@ const breweryButton = {
 export function AppSidebar() {
   return (
     <Sidebar className="border-r border-white/10 bg-black backdrop-blur-sm">
-      <SidebarHeader className="p-6 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-amber-600 to-orange-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">☕</span>
-          </div>
-          <span className="font-light text-xl text-white">Mod Brew</span>
+      <SidebarHeader className="pt-8 pb-2 px-6 border-b border-white/10">
+        <div className="flex items-center justify-start">
+          <img 
+            src="/images/Mod Brew Long.png" 
+            alt="Mod Brew Logo" 
+            className="w-40 h-auto"
+          />
         </div>
       </SidebarHeader>
       <SidebarContent className="p-4">
