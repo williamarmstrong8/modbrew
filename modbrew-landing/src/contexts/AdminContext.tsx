@@ -237,7 +237,7 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
       }));
     } catch (error) {
       console.error('Error refreshing expenses:', error);
-      toast.error('Failed to refresh expenses data');
+        toast.error('Failed to refresh expenses data');
     }
   };
 
@@ -302,61 +302,9 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     loadAllData();
   }, []);
 
-  // Set up real-time subscriptions
+  // Load data on mount only - no realtime subscriptions needed
   useEffect(() => {
-    // Subscribe to sales changes
-    const salesSubscription = supabase
-      .channel('sales_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'daily_sales',
-        },
-        () => {
-          refreshSales();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to expense changes
-    const expensesSubscription = supabase
-      .channel('expenses_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'expenses',
-        },
-        () => {
-          refreshExpenses();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to membership changes
-    const membershipsSubscription = supabase
-      .channel('memberships_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'memberships',
-        },
-        () => {
-          refreshMemberships();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      salesSubscription.unsubscribe();
-      expensesSubscription.unsubscribe();
-      membershipsSubscription.unsubscribe();
-    };
+    loadAllData();
   }, []);
 
   const value: AdminContextType = {
