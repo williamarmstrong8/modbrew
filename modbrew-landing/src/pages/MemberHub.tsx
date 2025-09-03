@@ -294,18 +294,16 @@ export default function MemberHub() {
               <CardHeader className="pb-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <CardTitle className="text-2xl font-light text-white">
-                        Weekly Challenge
-                      </CardTitle>
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                        Active
-                      </Badge>
-                    </div>
+                    <CardTitle className="text-2xl font-light text-white mb-2">
+                      Weekly Challenge
+                    </CardTitle>
                     <CardDescription className="text-white/60 font-light">
                       Upload 5 images of ModBrew for 20% off your next purchase
                     </CardDescription>
                   </div>
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                    Active
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>

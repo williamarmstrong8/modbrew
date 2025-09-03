@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
-
+import { Separator } from '../components/ui/separator'
 import { Label } from '../components/ui/label'
 import { 
   Upload, 
@@ -260,14 +260,18 @@ export default function WeeklyChallenge() {
       <div className="relative z-10 container mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-12">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/brewery')}
-            className="mb-6 text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Brewery
-          </Button>
+          <div className="flex items-center space-x-6 mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/brewery')}
+              className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Hub
+            </Button>
+            <Separator orientation="vertical" className="h-6 bg-white/20" />
+            <h1 className="text-lg font-light tracking-wide">Weekly Photo Challenge</h1>
+          </div>
           
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
