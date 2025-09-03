@@ -59,8 +59,16 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   -- Create membership with user profile data
+  -- Extract name from raw_user_meta_data, fallback to 'User' if not provided
   INSERT INTO public.memberships (user_id, name, email, role, membership_type, status)
-  VALUES (NEW.id, NEW.raw_user_meta_data->>'name', NEW.email, 'customer', 'basic', 'active');
+  VALUES (
+    NEW.id, 
+    COALESCE(NEW.raw_user_meta_data->>'name', 'User'),
+    NEW.email, 
+    'customer', 
+    'basic', 
+    'active'
+  );
   
   RETURN NEW;
 END;

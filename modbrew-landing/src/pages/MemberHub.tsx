@@ -49,11 +49,18 @@ export default function MemberHub() {
           .select('*')
           .eq('user_id', user.id)
           .eq('status', 'active')
-          .single()
+          .maybeSingle()
 
         if (membershipError) {
           console.error('Error fetching membership:', membershipError)
           // If no active membership, redirect to signup
+          navigate('/auth?mode=signup')
+          return
+        }
+
+        // If no membership found, redirect to signup
+        if (!membershipData) {
+          console.log('No membership found for user, redirecting to signup')
           navigate('/auth?mode=signup')
           return
         }
@@ -81,6 +88,9 @@ export default function MemberHub() {
         setChallengeStatus(status)
       } catch (error) {
         console.error('Error fetching user data:', error)
+        // If there's an error, redirect to signup as a fallback
+        navigate('/auth?mode=signup')
+        return
       } finally {
         setLoading(false)
       }

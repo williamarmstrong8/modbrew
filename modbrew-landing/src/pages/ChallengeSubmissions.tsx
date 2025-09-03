@@ -33,8 +33,10 @@ export default function ChallengeSubmissions() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [participantCount, setParticipantCount] = useState(0)
   const [imagesLoaded, setImagesLoaded] = useState(0)
+  const [loadingProgress, setLoadingProgress] = useState(0)
   const [displayedCount, setDisplayedCount] = useState(15)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [showContent, setShowContent] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -52,34 +54,57 @@ export default function ChallengeSubmissions() {
         setAllImages(parsedData)
         setImages(parsedData.slice(0, displayedCount))
         setParticipantCount(parseInt(cachedParticipantCount))
+        setLoadingProgress(0) // Reset loading progress for cached data
         
-        // For cached data, we need to verify all images are truly ready
-        // Wait for next tick to ensure images are in DOM, then check readiness
-        setTimeout(() => {
-          const imageElements = document.querySelectorAll('img[src]')
-          let readyImages = 0
+        // For cached data, also wait for images to load before hiding loading
+        if (parsedData.length > 0) {
+          const firstBatch = parsedData.slice(0, displayedCount)
+          console.log(`Loading cached data: waiting for ${firstBatch.length} images...`)
           
-          const checkAllImagesReady = () => {
-            readyImages = 0
-            imageElements.forEach((img) => {
-              const imgElement = img as HTMLImageElement
-              if (imgElement.complete && imgElement.naturalWidth > 0 && imgElement.naturalHeight > 0) {
-                readyImages++
+          // Wait for images to load
+          new Promise<void>((resolve) => {
+            let loadedCount = 0
+            const totalToLoad = firstBatch.length
+            
+            const handleImageLoad = () => {
+              loadedCount++
+              setLoadingProgress(loadedCount)
+              console.log(`Cached image loaded: ${loadedCount}/${totalToLoad}`)
+              
+              if (loadedCount >= totalToLoad) {
+                console.log('All cached images loaded successfully')
+                // Add a small delay to show the complete progress and allow smooth transition
+                setTimeout(() => resolve(), 500)
               }
+            }
+            
+            // Preload all images in the first batch
+            firstBatch.forEach((image: SubmissionImage) => {
+              const img = new window.Image()
+              img.onload = handleImageLoad
+              img.onerror = () => {
+                console.warn(`Failed to load cached image: ${image.name}`)
+                handleImageLoad() // Count errors as loaded to avoid infinite waiting
+              }
+              img.src = image.url
             })
             
-            if (readyImages === Math.min(parsedData.length, displayedCount)) {
-              // All displayed images are ready
-              setImagesLoaded(Math.min(parsedData.length, displayedCount))
-              setLoading(false)
-            } else {
-              // Some images not ready yet, check again
-              setTimeout(checkAllImagesReady, 100)
-            }
-          }
-          
-          checkAllImagesReady()
-        }, 100)
+            // Fallback: if images take too long, resolve anyway after 5 seconds
+            setTimeout(() => {
+              if (loadedCount < totalToLoad) {
+                console.warn(`Cache timeout reached, showing page with ${loadedCount}/${totalToLoad} images loaded`)
+                resolve()
+              }
+            }, 5000)
+                  }).then(() => {
+          setShowContent(true) // Trigger content animation
+          setTimeout(() => {
+            setLoading(false) // Hide loading after animation starts
+          }, 200)
+        })
+        } else {
+          setLoading(false) // No images to load
+        }
         
         return // Exit early, don't fetch fresh data
       } catch (err) {
@@ -98,18 +123,14 @@ export default function ChallengeSubmissions() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // Page became visible again, check if we need to reset loading state
-        if (images.length > 0 && imagesLoaded === images.length) {
-          setLoading(false)
-        } else if (images.length === 0) {
-          setLoading(false)
-        }
+        // Page became visible again, no need to change loading state
+        // Loading is already handled properly in fetchSubmissions
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [images.length, imagesLoaded])
+  }, [])
 
   // Clear cache when component unmounts (user navigates away)
   useEffect(() => {
@@ -120,14 +141,11 @@ export default function ChallengeSubmissions() {
     }
   }, [])
 
-  // Track when all images are loaded
+  // Track when all images are loaded (for display purposes only)
   useEffect(() => {
     if (images.length > 0 && imagesLoaded === images.length) {
-      // All images loaded, wait a bit more for smooth transition
-      setTimeout(() => setLoading(false), 500)
-    } else if (images.length === 0) {
-      // No images to load, hide loading after a short delay
-      setTimeout(() => setLoading(false), 300)
+      // All images loaded, but loading state is already handled in fetchSubmissions
+      console.log('All images loaded successfully')
     }
   }, [imagesLoaded, images.length])
 
@@ -156,7 +174,7 @@ export default function ChallengeSubmissions() {
 
       if (error) {
         console.error('Error fetching participant count:', error)
-        return
+        return 0
       }
 
       // Count unique participants (filter out null/undefined user_ids)
@@ -166,8 +184,6 @@ export default function ChallengeSubmissions() {
       const userIds = validUserIds.map(challenge => challenge.user_id)
       const uniqueParticipants = new Set(userIds)
       const count = uniqueParticipants.size
-      
-      setParticipantCount(count)
       
       return count // Return the count for caching
       
@@ -211,6 +227,7 @@ export default function ChallengeSubmissions() {
       setLoading(true)
       setError(null)
       setImagesLoaded(0) // Reset image load counter for new images
+      setLoadingProgress(0) // Reset loading progress for new images
 
       // List all files in the modbrew-5 bucket (no subfolders)
       const { data: files, error: listError } = await supabase.storage
@@ -266,19 +283,66 @@ export default function ChallengeSubmissions() {
       setImages(submissionImages.slice(0, displayedCount))
       
       // Fetch and cache participant count along with images
-      fetchParticipantCount().then((count) => {
-        if (count !== undefined) {
-          // Cache both images and participant count together
-          sessionStorage.setItem('challengeSubmissions', JSON.stringify(submissionImages))
-          sessionStorage.setItem('challengeParticipantCount', count.toString())
+      const participantCount = await fetchParticipantCount()
+      if (participantCount !== undefined) {
+        setParticipantCount(participantCount)
+        // Cache both images and participant count together
+        sessionStorage.setItem('challengeSubmissions', JSON.stringify(submissionImages))
+        sessionStorage.setItem('challengeParticipantCount', participantCount.toString())
+      }
+      
+              // Now wait for all displayed images to be fully loaded before hiding loading
+        if (submissionImages.length > 0) {
+          const firstBatch = submissionImages.slice(0, displayedCount)
+          console.log(`Waiting for ${firstBatch.length} images to load...`)
+          
+          // Create a promise that resolves when all first batch images are loaded
+          await new Promise<void>((resolve) => {
+            let loadedCount = 0
+            const totalToLoad = firstBatch.length
+            
+            const handleImageLoad = () => {
+              loadedCount++
+              setLoadingProgress(loadedCount)
+              console.log(`Loaded ${loadedCount}/${totalToLoad} images`)
+              
+              if (loadedCount >= totalToLoad) {
+                console.log('All images loaded successfully')
+                // Add a small delay to show the complete progress and allow smooth transition
+                setTimeout(() => resolve(), 500)
+              }
+            }
+            
+            // Preload all images in the first batch
+            firstBatch.forEach((image) => {
+              const img = new window.Image()
+              img.onload = handleImageLoad
+              img.onerror = () => {
+                console.warn(`Failed to load image: ${image.name}`)
+                handleImageLoad() // Count errors as loaded to avoid infinite waiting
+              }
+              img.src = image.url
+            })
+            
+            // Fallback: if images take too long, resolve anyway after 10 seconds
+            setTimeout(() => {
+              if (loadedCount < totalToLoad) {
+                console.warn(`Timeout reached, showing page with ${loadedCount}/${totalToLoad} images loaded`)
+                resolve()
+              }
+            }, 10000)
+          })
         }
-      })
       
     } catch (err) {
       console.error('Error fetching submissions:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch submissions')
     } finally {
-      // Loading will be controlled by the useEffect hook
+      // Only hide loading after everything is fetched AND images are loaded
+      setShowContent(true) // Trigger content animation
+      setTimeout(() => {
+        setLoading(false) // Hide loading after animation starts
+      }, 200)
     }
   }
 
@@ -297,11 +361,31 @@ export default function ChallengeSubmissions() {
           }} />
         </div>
         
-        <div className="relative z-10 flex items-center justify-center min-h-screen">
+        <motion.div 
+          className="relative z-10 flex items-center justify-center min-h-screen"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: showContent ? 0 : 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
           <div className="text-center">
             <LoadingSpinner size="lg" text="Loading submissions..." />
+            {images.length > 0 && (
+              <div className="mt-4 text-white/60">
+                <p>Loading images... {loadingProgress}/{Math.min(images.length, displayedCount)}</p>
+                <div className="mt-2 w-48 bg-white/20 rounded-full h-2 overflow-hidden">
+                  <motion.div 
+                    className="bg-white/60 h-2 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ 
+                      width: `${Math.min(images.length, displayedCount) > 0 ? (loadingProgress / Math.min(images.length, displayedCount)) * 100 : 0}%` 
+                    }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        </motion.div>
       </div>
     )
   }
@@ -317,7 +401,12 @@ export default function ChallengeSubmissions() {
         }} />
       </div>
 
-      <div className="relative z-10 container mx-auto px-6 py-8">
+      <motion.div 
+        className="relative z-10 container mx-auto px-6 py-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: showContent ? 1 : 0 }}
+        transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+      >
         {/* Header */}
         <div className="mb-12">
           <div className="flex items-center space-x-6 mb-8">
@@ -434,7 +523,7 @@ export default function ChallengeSubmissions() {
             <p className="text-white/60">Be the first to submit your ModBrew challenge photos!</p>
           </div>
         )}
-      </div>
+      </motion.div>
       {selectedImage && (
         <ImageModal
           isOpen={isModalOpen}
