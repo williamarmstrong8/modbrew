@@ -19,7 +19,8 @@ import {
   Sparkles,
   Heart,
   Zap,
-  CheckCircle
+  CheckCircle,
+  BarChart3
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -293,16 +294,68 @@ export default function MemberHub() {
             </div>
           </motion.div>
 
+          {/* Admin Section - Only visible to admin users */}
+          {membership.role === 'admin' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="mb-12"
+            >
+              <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
+                <CardHeader className="pb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
+                    <div>
+                      <CardTitle className="text-2xl font-light text-white mb-2">
+                        Admin Dashboard
+                      </CardTitle>
+                      <CardDescription className="text-white/60 font-light">
+                        Access business analytics and manage operations
+                      </CardDescription>
+                    </div>
+                    <Badge className="bg-white/10 text-white/80 border-white/20 mt-1">
+                      Admin
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                      <div className="flex items-center space-x-4">
+                        <div className="p-3 rounded-lg bg-white/10 flex-shrink-0">
+                          <BarChart3 className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium">Business Analytics</p>
+                          <p className="text-white/60 text-sm">
+                            View sales data, customer insights, and performance metrics
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => navigate('/admin')}
+                        className="w-full sm:w-auto bg-white text-black hover:bg-white/90 transition-all duration-200"
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        Access Dashboard
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
           {/* Weekly Challenges Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15 }}
+            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.25 : 0.15 }}
             className="mb-12"
           >
             <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
               <CardHeader className="pb-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
                   <div>
                     <CardTitle className="text-2xl font-light text-white mb-2">
                       Weekly Challenge
@@ -311,7 +364,7 @@ export default function MemberHub() {
                       Upload 5 images of ModBrew for 20% off your next purchase
                     </CardDescription>
                   </div>
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 mt-1">
                     Active
                   </Badge>
                 </div>
@@ -477,7 +530,7 @@ export default function MemberHub() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.4 : 0.3 }}
             className="mb-12"
           >
             <div className="mb-8">
@@ -491,7 +544,7 @@ export default function MemberHub() {
                 value={daysActive}
                 description="Time as a member"
                 color="text-blue-400"
-                delay={0.3}
+                delay={membership.role === 'admin' ? 0.4 : 0.3}
               />
               <StatsCard
                 icon={Star}
@@ -499,7 +552,7 @@ export default function MemberHub() {
                 value={membership.membership_type.toUpperCase()}
                 description="Your current tier"
                 color="text-yellow-400"
-                delay={0.4}
+                delay={membership.role === 'admin' ? 0.5 : 0.4}
               />
               <StatsCard
                 icon={Heart}
@@ -507,7 +560,7 @@ export default function MemberHub() {
                 value={membership.status.toUpperCase()}
                 description="Account status"
                 color="text-emerald-400"
-                delay={0.5}
+                delay={membership.role === 'admin' ? 0.6 : 0.5}
               />
             </div>
           </motion.div>
@@ -516,7 +569,7 @@ export default function MemberHub() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.5 : 0.4 }}
             className="mb-12"
           >
             <div className="mb-8">
@@ -529,7 +582,7 @@ export default function MemberHub() {
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                  transition={{ duration: 0.5, delay: (membership.role === 'admin' ? 0.6 : 0.5) + index * 0.1 }}
                   whileHover={{ y: -5 }}
                 >
                   <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full group hover:bg-white/10 transition-all duration-300">
@@ -556,7 +609,7 @@ export default function MemberHub() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.55 }}
+            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.65 : 0.55 }}
           >
             <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
               <CardHeader className="pb-6">

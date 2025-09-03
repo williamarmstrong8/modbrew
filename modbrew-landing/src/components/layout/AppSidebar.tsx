@@ -6,6 +6,7 @@ import {
   Receipt,
   Package,
   BarChart3,
+  Coffee,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,6 +27,12 @@ const menuItems = [
   { title: "Products", url: "/admin/products", icon: Package },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
 ];
+
+const breweryButton = {
+  title: "Return to Brewery",
+  url: "/brewery",
+  icon: Coffee,
+};
 
 export function AppSidebar() {
   return (
@@ -59,6 +66,21 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+            
+            {/* Separator */}
+            <div className="my-4 border-t border-slate-200" />
+            
+            {/* Return to Brewery Button */}
+            <SidebarMenu className="space-y-2">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className="h-12 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 text-slate-700 font-medium">
+                  <NavLink to={breweryButton.url} className="flex items-center gap-3 px-4 py-3">
+                    <breweryButton.icon className="w-5 h-5" />
+                    <span>{breweryButton.title}</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
