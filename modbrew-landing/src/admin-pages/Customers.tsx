@@ -4,13 +4,15 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
-import { Search, Plus, Eye, Mail } from "lucide-react";
+import { Search, Eye, Mail } from "lucide-react";
 import { useAdminContext } from "../contexts/AdminContext";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 const Customers = () => {
   const { adminData } = useAdminContext();
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const customersPerPage = 10;
 
   // Transform memberships data to customer format
   const customers = adminData.memberships.map((membership) => ({
@@ -34,6 +36,34 @@ const Customers = () => {
     customer.status.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
+  const startIndex = (currentPage - 1) * customersPerPage;
+  const endIndex = startIndex + customersPerPage;
+  const currentCustomers = filteredCustomers.slice(startIndex, endIndex);
+
+  // Reset to first page when search term changes
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "vip": return "bg-purple-500/20 text-purple-400 border-purple-500/30";
@@ -43,12 +73,38 @@ const Customers = () => {
     }
   };
 
+  // Calculate monthly customer and member stats
+  const monthlyCustomerStats = useMemo(() => {
+    const thisMonth = new Date().getMonth();
+    const thisYear = new Date().getFullYear();
+    
+    // Calculate total customers from sales data this month
+    const thisMonthSales = adminData.dailySales.filter(sale => {
+      const saleDate = new Date(sale.sales_date);
+      return saleDate.getMonth() === thisMonth && saleDate.getFullYear() === thisYear;
+    });
+    
+    // Sum up all customer counts from this month's sales
+    const totalMonthlyCustomers = thisMonthSales.reduce((sum, sale) => sum + sale.customer_count, 0);
+    
+    // Calculate new monthly members
+    const thisMonthMembers = adminData.memberships.filter(membership => {
+      const membershipDate = new Date(membership.created_at);
+      return membershipDate.getMonth() === thisMonth && membershipDate.getFullYear() === thisYear;
+    });
+    
+    return {
+      newMonthlyCustomers: totalMonthlyCustomers,
+      newMonthlyMembers: thisMonthMembers.length
+    };
+  }, [adminData.dailySales, adminData.memberships]);
+
   // Calculate real customer stats
   const customerStats = [
     { title: "Total Customers", value: adminData.stats.totalCustomers.toString(), change: "From sales data" },
+    { title: "New Monthly Customers", value: monthlyCustomerStats.newMonthlyCustomers.toString(), change: "This month" },
     { title: "Total Members", value: adminData.stats.totalMembers.toString(), change: "Live data" },
-    { title: "New Members This Week", value: adminData.stats.newMembersThisWeek.toString(), change: "Live data" },
-    { title: "VIP Members", value: adminData.memberships.filter(m => m.membership_type === 'vip').length.toString(), change: "Live data" }
+    { title: "New Monthly Members", value: monthlyCustomerStats.newMonthlyMembers.toString(), change: "This month" }
   ];
 
   // Show loading state
@@ -85,15 +141,9 @@ const Customers = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-light text-white tracking-wide">Customers</h1>
-          <p className="text-white/60 font-light text-lg">Manage your customer relationships and loyalty</p>
-        </div>
-        <Button className="bg-white text-black border-white hover:bg-gray-100 hover:border-gray-200">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Customer
-        </Button>
+      <div>
+        <h1 className="text-3xl font-light text-white tracking-wide">Customers</h1>
+        <p className="text-white/60 font-light text-lg">Manage your customer relationships and loyalty</p>
       </div>
 
       {/* Stats */}
@@ -122,7 +172,7 @@ const Customers = () => {
               <Input
                 placeholder="Search customers..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20"
               />
             </div>
@@ -138,7 +188,7 @@ const Customers = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredCustomers.length === 0 ? (
+            {currentCustomers.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-white/40 text-6xl mb-4">👥</div>
                 <h3 className="text-lg font-light text-white mb-2">No customers found</h3>
@@ -147,7 +197,7 @@ const Customers = () => {
                 </p>
               </div>
             ) : (
-              filteredCustomers.map((customer) => (
+              currentCustomers.map((customer) => (
                 <div key={customer.id} className="flex items-center justify-between p-6 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/10">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-12 w-12">
@@ -260,6 +310,53 @@ const Customers = () => {
                   </div>
                 </div>
               ))
+            )}
+            
+            {/* Pagination Controls */}
+            {filteredCustomers.length > customersPerPage && (
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-white/60">
+                  Showing {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of {filteredCustomers.length} customers
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className="bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ← Previous
+                  </Button>
+                  
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(page)}
+                        className={currentPage === page 
+                          ? "bg-white text-black border-white hover:bg-white hover:text-black" 
+                          : "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                        }
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className="bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next →
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         </CardContent>

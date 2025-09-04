@@ -5,10 +5,50 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Receipt, TrendingDown, Plus, Building, TrendingUp } from "lucide-react";
 import { useAdminContext } from "../contexts/AdminContext";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import DatePicker from "../components/ui/date-picker";
+import { toast } from "sonner";
 
 const Expenses = () => {
-  const { adminData } = useAdminContext();
+  const { adminData, addExpense } = useAdminContext();
+
+  // Expenses state
+  const [expenseDate, setExpenseDate] = useState(() => {
+    const now = new Date();
+    const easternTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+    return easternTime.toISOString().split('T')[0];
+  });
+  const [expenseItem, setExpenseItem] = useState("");
+  const [expensePrice, setExpensePrice] = useState("");
+  const [expensePurchaser, setExpensePurchaser] = useState<"will" | "mary" | "ben">("will");
+
+  const handleAddExpense = async () => {
+    const price = parseFloat(expensePrice);
+    
+    if (expenseItem.trim() && !isNaN(price) && price > 0 && expensePurchaser) {
+      try {
+        await addExpense({
+          purchased_at: expenseDate + 'T00:00:00Z', // Convert date to timestamp
+          item_name: expenseItem.trim(), // Use just the item description
+          price: price,
+          purchaser: expensePurchaser
+        });
+        
+        setExpenseItem("");
+        setExpensePrice("");
+        setExpensePurchaser("will");
+        toast.success('Expense added successfully!');
+      } catch (error) {
+        console.error('Error adding expense:', error);
+        toast.error('Failed to add expense');
+      }
+    } else {
+      toast.error('Please fill in all fields with valid values');
+    }
+  };
 
   // Calculate real expense stats
   const expenseStats = useMemo(() => {
@@ -195,10 +235,81 @@ const Expenses = () => {
           <h1 className="text-3xl font-light text-white tracking-wide">Expenses</h1>
           <p className="text-white/60 font-light text-lg">Track and manage your business expenses</p>
         </div>
-        <Button className="bg-white text-black border-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Expense
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="bg-white text-black border-white hover:bg-white hover:text-black">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Expense
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-black border-white/10">
+            <DialogHeader>
+              <DialogTitle className="text-white">Add Expense</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white">Date</label>
+                <DatePicker
+                  value={expenseDate}
+                  onChange={setExpenseDate}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white">Item</label>
+                <Input
+                  type="text"
+                  placeholder="Enter item description"
+                  value={expenseItem}
+                  onChange={(e) => setExpenseItem(e.target.value)}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white">Price ($)</label>
+                <Input
+                  type="number"
+                  placeholder="Enter price"
+                  value={expensePrice}
+                  onChange={(e) => setExpensePrice(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white">Purchaser</label>
+                <Select value={expensePurchaser} onValueChange={(value: "will" | "mary" | "ben") => setExpensePurchaser(value)}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-white focus:bg-white/10 focus:border-white/20">
+                    <SelectValue placeholder="Select purchaser" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black border-white/10">
+                    <SelectItem value="mary" className="text-white hover:bg-white/10">Mary</SelectItem>
+                    <SelectItem value="will" className="text-white hover:bg-white/10">Will</SelectItem>
+                    <SelectItem value="ben" className="text-white hover:bg-white/10">Ben</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setExpenseItem("");
+                    setExpensePrice("");
+                  }}
+                  className="bg-white text-black border-white hover:bg-white hover:text-black"
+                >
+                  Clear
+                </Button>
+                <Button
+                  className="bg-white text-black border-white hover:bg-white hover:text-black"
+                  onClick={handleAddExpense}
+                >
+                  Add Expense
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats Grid */}
@@ -344,58 +455,80 @@ const Expenses = () => {
                     <p className="text-2xl font-light text-red-400">${adminData.stats.totalExpenses.toFixed(2)}</p>
                   </div>
                 </div>
-                <div className="text-center p-6 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <div className="text-center p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
                   <p className="text-sm text-blue-400 font-medium">Net Profit</p>
-                  <p className={`text-3xl font-light ${adminData.stats.totalProfit >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                  <p className={`text-2xl font-light ${adminData.stats.totalProfit >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
                     ${adminData.stats.totalProfit.toFixed(2)}
                   </p>
                   <p className="text-sm text-blue-400 mt-1">
                     {adminData.stats.totalProfit >= 0 ? 'Available for distribution' : 'Loss - no payout'}
                   </p>
                 </div>
+                <div className="text-center p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                  <p className="text-sm text-purple-400 font-medium">Each Person Gets</p>
+                  <p className={`text-xl font-light ${adminData.stats.totalProfit >= 0 ? 'text-purple-400' : 'text-red-400'}`}>
+                    ${(adminData.stats.totalProfit / 3).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-purple-400 mt-1">All-time split 3 ways</p>
+                </div>
               </CardContent>
             </Card>
 
-            {/* All-Time Payout Breakdown */}
+            {/* Sales Performance & Payout */}
             <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
               <CardHeader>
-                <CardTitle className="text-xl font-light text-white">All-Time Payout Breakdown</CardTitle>
+                <CardTitle className="text-xl font-light text-white">Sales Performance & Payout</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {(() => {
-                  // Calculate all-time revenue
-                  const allTimeRevenue = adminData.stats.totalRevenue;
+                  // Calculate this month's sales
+                  const thisMonth = new Date().getMonth();
+                  const thisYear = new Date().getFullYear();
+                  const thisMonthSales = adminData.dailySales
+                    .filter(sale => {
+                      const saleDate = new Date(sale.sales_date);
+                      return saleDate.getMonth() === thisMonth && saleDate.getFullYear() === thisYear;
+                    })
+                    .reduce((sum, sale) => sum + sale.gross_sales, 0);
                   
-                  // Calculate all-time expenses
-                  const allTimeExpenses = adminData.stats.totalExpenses;
+                  // Calculate this month's expenses
+                  const thisMonthExpenses = adminData.expenses
+                    .filter(expense => {
+                      const expenseDate = new Date(expense.purchased_at);
+                      return expenseDate.getMonth() === thisMonth && expenseDate.getFullYear() === thisYear;
+                    })
+                    .reduce((sum, expense) => sum + expense.price, 0);
                   
-                  const allTimeProfit = allTimeRevenue - allTimeExpenses;
-                  const individualPayout = allTimeProfit / 3;
+                  // Calculate this month's profit
+                  const thisMonthProfit = thisMonthSales - thisMonthExpenses;
                   
                   return (
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                          <p className="text-sm text-green-400 font-medium">All-Time Revenue</p>
-                          <p className="text-lg font-light text-green-400">${allTimeRevenue.toFixed(2)}</p>
+                        <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                          <p className="text-sm text-green-400 font-medium">This Month Sales</p>
+                          <p className="text-2xl font-light text-green-400">${thisMonthSales.toFixed(2)}</p>
                         </div>
-                        <div className="text-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                          <p className="text-sm text-red-400 font-medium">All-Time Expenses</p>
-                          <p className="text-lg font-light text-red-400">${allTimeExpenses.toFixed(2)}</p>
+                        <div className="text-center p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+                          <p className="text-sm text-red-400 font-medium">This Month Expenses</p>
+                          <p className="text-2xl font-light text-red-400">${thisMonthExpenses.toFixed(2)}</p>
                         </div>
                       </div>
                       <div className="text-center p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                        <p className="text-sm text-blue-400 font-medium">All-Time Profit</p>
-                        <p className={`text-xl font-light ${allTimeProfit >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
-                          ${allTimeProfit.toFixed(2)}
+                        <p className="text-sm text-blue-400 font-medium">This Month Profit</p>
+                        <p className={`text-2xl font-light ${thisMonthProfit >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                          ${thisMonthProfit.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-blue-400 mt-1">
+                          {thisMonthProfit >= 0 ? 'Positive month' : 'Expenses exceed sales'}
                         </p>
                       </div>
                       <div className="text-center p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
                         <p className="text-sm text-purple-400 font-medium">Each Person Gets</p>
-                        <p className={`text-xl font-light ${individualPayout >= 0 ? 'text-purple-400' : 'text-red-400'}`}>
-                          ${individualPayout.toFixed(2)}
+                        <p className={`text-xl font-light ${thisMonthProfit >= 0 ? 'text-purple-400' : 'text-red-400'}`}>
+                          ${(thisMonthProfit / 3).toFixed(2)}
                         </p>
-                        <p className="text-xs text-purple-400 mt-1">Split 3 ways</p>
+                        <p className="text-xs text-purple-400 mt-1">This month split 3 ways</p>
                       </div>
                     </div>
                   );
