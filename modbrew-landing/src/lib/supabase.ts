@@ -58,6 +58,16 @@ export type WeeklyChallenge = {
   created_at: string;
 };
 
+export type WeeklyChallenge2 = {
+  id: string;
+  user_id: string;
+  challenge_name: string;
+  status: string;
+  photo_url: string;
+  submitted_at: string;
+  created_at: string;
+};
+
 export type UserProfile = {
   id: string;
   user_id: string;

@@ -20,7 +20,8 @@ import {
   Heart,
   Zap,
   CheckCircle,
-  BarChart3
+  BarChart3,
+  Share2
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -32,7 +33,7 @@ export default function MemberHub() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const [membership, setMembership] = useState<Membership | null>(null)
-  const [challengeStatus, setChallengeStatus] = useState<'not_started' | 'in_progress' | 'completed' | null>(null)
+  const [storyChallengeStatus, setStoryChallengeStatus] = useState<'not_started' | 'in_progress' | 'completed' | null>(null)
 
   const [loading, setLoading] = useState(true)
 
@@ -67,26 +68,34 @@ export default function MemberHub() {
         }
 
         // Fetch weekly challenge status using raw SQL to avoid query builder issues
-        const { data: challengeData, error: challengeError } = await supabase
+        const { error: challengeError } = await supabase
           .rpc('get_user_challenge_status', { user_uuid: user.id })
 
         if (challengeError) {
           console.error('Error fetching challenge status:', challengeError)
         }
 
-        // Determine challenge status
-        let status: 'not_started' | 'in_progress' | 'completed' = 'not_started'
-        if (challengeData && challengeData.length > 0) {
-          const challenge = challengeData[0]
+        // Fetch story challenge status
+        const { data: storyChallengeData, error: storyChallengeError } = await supabase
+          .rpc('get_user_challenge_2_status', { user_uuid: user.id })
+
+        if (storyChallengeError) {
+          console.error('Error fetching story challenge status:', storyChallengeError)
+        }
+
+        // Determine story challenge status
+        let storyStatus: 'not_started' | 'in_progress' | 'completed' = 'not_started'
+        if (storyChallengeData && storyChallengeData.length > 0) {
+          const challenge = storyChallengeData[0]
           if (challenge.status === 'completed') {
-            status = 'completed'
+            storyStatus = 'completed'
           } else if (challenge.status === 'in_progress') {
-            status = 'in_progress'
+            storyStatus = 'in_progress'
           }
         }
 
         setMembership(membershipData)
-        setChallengeStatus(status)
+        setStoryChallengeStatus(storyStatus)
       } catch (error) {
         console.error('Error fetching user data:', error)
         // If there's an error, redirect to signup as a fallback
@@ -104,7 +113,7 @@ export default function MemberHub() {
     if (!user?.id) return
 
     try {
-      const { data: challengeData, error: challengeError } = await supabase
+      const { error: challengeError } = await supabase
         .rpc('get_user_challenge_status', { user_uuid: user.id })
 
       if (challengeError) {
@@ -112,17 +121,25 @@ export default function MemberHub() {
         return
       }
 
-      let status: 'not_started' | 'in_progress' | 'completed' = 'not_started'
-      if (challengeData && challengeData.length > 0) {
-        const challenge = challengeData[0]
+      const { data: storyChallengeData, error: storyChallengeError } = await supabase
+        .rpc('get_user_challenge_2_status', { user_uuid: user.id })
+
+      if (storyChallengeError) {
+        console.error('Error fetching story challenge status:', storyChallengeError)
+        return
+      }
+
+      let storyStatus: 'not_started' | 'in_progress' | 'completed' = 'not_started'
+      if (storyChallengeData && storyChallengeData.length > 0) {
+        const challenge = storyChallengeData[0]
         if (challenge.status === 'completed') {
-          status = 'completed'
+          storyStatus = 'completed'
         } else if (challenge.status === 'in_progress') {
-          status = 'in_progress'
+          storyStatus = 'in_progress'
         }
       }
 
-              setChallengeStatus(status)
+      setStoryChallengeStatus(storyStatus)
     } catch (error) {
       console.error('Error refreshing challenge status:', error)
     }
@@ -358,10 +375,10 @@ export default function MemberHub() {
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
                   <div>
                     <CardTitle className="text-2xl font-light text-white mb-2">
-                      Weekly Challenge
+                      Story Challenge
                     </CardTitle>
                     <CardDescription className="text-white/60 font-light">
-                      Upload 5 images of ModBrew for 20% off your next purchase
+                      Share a screenshot of your ModBrew story for a chance to win free merch
                     </CardDescription>
                   </div>
                   <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 mt-1">
@@ -376,7 +393,7 @@ export default function MemberHub() {
                     <div className="flex items-center space-x-4">
                       <div className="p-3 rounded-lg bg-white/10 flex-shrink-0">
                         <AnimatePresence mode="wait">
-                          {challengeStatus === 'completed' ? (
+                          {storyChallengeStatus === 'completed' ? (
                             <motion.div 
                               key="icon-completed"
                               initial={{ opacity: 0, scale: 0.9 }}
@@ -394,25 +411,25 @@ export default function MemberHub() {
                               exit={{ opacity: 0, scale: 0.9 }}
                               transition={{ duration: 0.2 }}
                             >
-                              <Coffee className="h-5 w-5 text-white" />
+                              <Share2 className="h-5 w-5 text-white" />
                             </motion.div>
                           )}
                         </AnimatePresence>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white font-medium">Upload 5 ModBrew Images</p>
+                        <p className="text-white font-medium">Submit Story Screenshot</p>
                         <p className="text-white/60 text-sm">
-                          {challengeStatus === 'completed' 
-                            ? 'Challenge completed! You earned 20% off your next purchase' 
-                            : 'Get 20% off your next purchase'
+                          {storyChallengeStatus === 'completed' 
+                            ? 'Challenge completed! You\'re entered in the raffle' 
+                            : 'Enter the raffle for free merch'
                           }
                         </p>
                       </div>
                     </div>
                     <AnimatePresence mode="wait">
-                      {challengeStatus === 'completed' ? (
+                      {storyChallengeStatus === 'completed' ? (
                         <motion.div 
-                          key="challenge-completed"
+                          key="story-challenge-completed"
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.9 }}
@@ -420,7 +437,7 @@ export default function MemberHub() {
                           className="flex-shrink-0"
                         >
                           <Button 
-                            onClick={() => navigate('/challenge-submissions')}
+                            onClick={() => navigate('/challenge-submissions?type=story')}
                             className="w-full sm:w-auto bg-white text-black hover:bg-white/90 transition-all duration-200"
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
@@ -429,7 +446,7 @@ export default function MemberHub() {
                         </motion.div>
                       ) : (
                         <motion.div 
-                          key="challenge-not-completed"
+                          key="story-challenge-not-completed"
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.9 }}
@@ -437,10 +454,10 @@ export default function MemberHub() {
                           className="flex-shrink-0"
                         >
                           <Button 
-                            onClick={() => navigate('/weekly-challenge')}
+                            onClick={() => navigate('/weekly-challenge?type=story')}
                             className="w-full sm:w-auto bg-white text-black hover:bg-white/90 transition-all duration-200"
                           >
-                            {challengeStatus === 'in_progress' ? 'Continue' : 'Participate'}
+                            {storyChallengeStatus === 'in_progress' ? 'Continue' : 'Participate'}
                           </Button>
                         </motion.div>
                       )}
@@ -451,24 +468,24 @@ export default function MemberHub() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10">
                     <div className="text-center">
                       <div className="text-xl font-medium text-white mb-1">
-                        {challengeStatus === 'completed' ? '✓' : '∞'}
+                        {storyChallengeStatus === 'completed' ? '✓' : '∞'}
                       </div>
                       <div className="text-white/60 text-sm">
-                        {challengeStatus === 'completed' ? 'Completed' : 'Always Open'}
+                        {storyChallengeStatus === 'completed' ? 'Completed' : 'Always Open'}
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-medium text-white mb-1">
-                        {challengeStatus === 'completed' ? '5' : '5'}
+                        {storyChallengeStatus === 'completed' ? '1' : '1'}
                       </div>
                       <div className="text-white/60 text-sm">
-                        {challengeStatus === 'completed' ? 'Photos Uploaded' : 'Photos Required'}
+                        {storyChallengeStatus === 'completed' ? 'Screenshot Uploaded' : 'Screenshot Required'}
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-medium text-white mb-1">20%</div>
+                      <div className="text-xl font-medium text-white mb-1">Free Merch</div>
                       <div className="text-white/60 text-sm">
-                        {challengeStatus === 'completed' ? 'Reward Earned' : 'Discount'}
+                        {storyChallengeStatus === 'completed' ? 'Raffle Entry' : 'Raffle Ticket'}
                       </div>
                     </div>
                   </div>
@@ -476,6 +493,7 @@ export default function MemberHub() {
               </CardContent>
             </Card>
           </motion.div>
+
 
           {/* Membership Status Card */}
           <motion.div
