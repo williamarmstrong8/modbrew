@@ -13,9 +13,11 @@ import {
   Camera, 
   ArrowLeft,
   Sparkles,
-  Coffee
+  Coffee,
+  Gift,
+  Share2
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LoadingSpinner } from '../components/ui/loading-spinner'
 
@@ -30,6 +32,7 @@ interface ChallengePhoto {
 export default function WeeklyChallenge() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [photos, setPhotos] = useState<ChallengePhoto[]>([])
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -37,6 +40,10 @@ export default function WeeklyChallenge() {
   const [success, setSuccess] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [fileInputKey, setFileInputKey] = useState(0)
+  
+  // Determine challenge type from URL parameter
+  const challengeType = searchParams.get('type') || 'photo' // 'photo' or 'story'
+  const isStoryChallenge = challengeType === 'story'
 
   useEffect(() => {
     if (!user) {
@@ -56,14 +63,31 @@ export default function WeeklyChallenge() {
       uploaded: false
     }))
 
-    // Limit to 5 photos
+    const maxPhotos = isStoryChallenge ? 1 : 5
     const totalPhotos = photos.length + newPhotos.length
-    if (totalPhotos > 5) {
-      setError('You can only upload a maximum of 5 photos')
+    
+    if (totalPhotos > maxPhotos) {
+      setError(isStoryChallenge 
+        ? 'You can only upload 1 screenshot for the story challenge' 
+        : 'You can only upload a maximum of 5 photos')
       return
     }
 
-    setPhotos(prev => [...prev, ...newPhotos])
+    // For story challenge, replace existing photo; for photo challenge, add to existing
+    if (isStoryChallenge) {
+      // Clear existing photos and add the new one
+      setPhotos(prev => {
+        prev.forEach(photo => {
+          if (photo.preview) {
+            URL.revokeObjectURL(photo.preview)
+          }
+        })
+        return newPhotos
+      })
+    } else {
+      setPhotos(prev => [...prev, ...newPhotos])
+    }
+    
     setError(null)
     // Reset file input key to ensure fresh input for next selection
     resetFileInput()
@@ -71,7 +95,8 @@ export default function WeeklyChallenge() {
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
-    if (photos.length < 5) {
+    const maxPhotos = isStoryChallenge ? 1 : 5
+    if (photos.length < maxPhotos) {
       setIsDragOver(true)
     }
   }
@@ -85,7 +110,8 @@ export default function WeeklyChallenge() {
     e.preventDefault()
     setIsDragOver(false)
     
-    if (photos.length >= 5) return
+    const maxPhotos = isStoryChallenge ? 1 : 5
+    if (photos.length >= maxPhotos) return
 
     const files = Array.from(e.dataTransfer.files).filter(file => 
       file.type.startsWith('image/')
@@ -103,14 +129,29 @@ export default function WeeklyChallenge() {
       uploaded: false
     }))
 
-    // Limit to 5 photos
     const totalPhotos = photos.length + newPhotos.length
-    if (totalPhotos > 5) {
-      setError('You can only upload a maximum of 5 photos')
+    if (totalPhotos > maxPhotos) {
+      setError(isStoryChallenge 
+        ? 'You can only upload 1 screenshot for the story challenge' 
+        : 'You can only upload a maximum of 5 photos')
       return
     }
 
-    setPhotos(prev => [...prev, ...newPhotos])
+    // For story challenge, replace existing photo; for photo challenge, add to existing
+    if (isStoryChallenge) {
+      // Clear existing photos and add the new one
+      setPhotos(prev => {
+        prev.forEach(photo => {
+          if (photo.preview) {
+            URL.revokeObjectURL(photo.preview)
+          }
+        })
+        return newPhotos
+      })
+    } else {
+      setPhotos(prev => [...prev, ...newPhotos])
+    }
+    
     setError(null)
     // Reset file input key to ensure fresh input for next selection
     resetFileInput()
@@ -171,8 +212,11 @@ export default function WeeklyChallenge() {
   }
 
   const handleSubmit = async () => {
-    if (photos.length < 5) {
-      setError('Please upload exactly 5 photos to participate')
+    const requiredPhotos = isStoryChallenge ? 1 : 5
+    if (photos.length < requiredPhotos) {
+      setError(isStoryChallenge 
+        ? 'Please upload 1 screenshot to participate' 
+        : 'Please upload exactly 5 photos to participate')
       return
     }
 
@@ -192,20 +236,37 @@ export default function WeeklyChallenge() {
         url: photoUrls[index]
       })))
 
-      // Create challenge record
-      const { error: challengeError } = await supabase
-        .from('weekly_challenges')
-        .insert({
-          user_id: user?.id,
-          challenge_name: 'Weekly Photo Challenge',
-          status: 'completed',
-          photo_urls: photoUrls,
-          submitted_at: new Date().toISOString()
-        })
+      // Create challenge record based on type
+      if (isStoryChallenge) {
+        const { error: challengeError } = await supabase
+          .from('weekly_challenges_2')
+          .insert({
+            user_id: user?.id,
+            challenge_name: 'Weekly Story Screenshot Challenge',
+            status: 'completed',
+            photo_url: photoUrls[0], // Single photo URL
+            submitted_at: new Date().toISOString()
+          })
 
-      if (challengeError) {
-        console.error('Challenge creation error:', challengeError)
-        throw new Error(`Failed to create challenge record: ${challengeError.message}`)
+        if (challengeError) {
+          console.error('Challenge creation error:', challengeError)
+          throw new Error(`Failed to create challenge record: ${challengeError.message}`)
+        }
+      } else {
+        const { error: challengeError } = await supabase
+          .from('weekly_challenges')
+          .insert({
+            user_id: user?.id,
+            challenge_name: 'Weekly Photo Challenge',
+            status: 'completed',
+            photo_urls: photoUrls,
+            submitted_at: new Date().toISOString()
+          })
+
+        if (challengeError) {
+          console.error('Challenge creation error:', challengeError)
+          throw new Error(`Failed to create challenge record: ${challengeError.message}`)
+        }
       }
 
       setSuccess(true)
@@ -218,7 +279,8 @@ export default function WeeklyChallenge() {
     }
   }
 
-  const canSubmit = photos.length === 5 && !uploading && !submitting
+  const requiredPhotos = isStoryChallenge ? 1 : 5
+  const canSubmit = photos.length === requiredPhotos && !uploading && !submitting
 
   if (success) {
     return (
@@ -241,7 +303,11 @@ export default function WeeklyChallenge() {
             <div className="mb-8">
               <CheckCircle className="h-20 w-20 text-emerald-400 mx-auto mb-6" />
               <h1 className="text-3xl font-light text-white mb-3">Challenge Submitted!</h1>
-              <p className="text-white/60 text-lg">Your 5 photos have been uploaded successfully.</p>
+              <p className="text-white/60 text-lg">
+                {isStoryChallenge 
+                  ? 'Your story screenshot has been uploaded successfully.' 
+                  : 'Your 5 photos have been uploaded successfully.'}
+              </p>
             </div>
             
             <div className="space-y-4">
@@ -282,17 +348,25 @@ export default function WeeklyChallenge() {
               Back to Hub
             </Button>
             <Separator orientation="vertical" className="h-6 bg-white/20" />
-            <h1 className="text-lg font-light tracking-wide">Weekly Photo Challenge</h1>
+            <h1 className="text-lg font-light tracking-wide">
+              {isStoryChallenge ? 'Weekly Story Challenge' : 'Weekly Photo Challenge'}
+            </h1>
           </div>
           
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
               <div className="p-3 rounded-full bg-white/10 mr-4">
-                <Sparkles className="h-8 w-8 text-white" />
+                {isStoryChallenge ? <Share2 className="h-8 w-8 text-white" /> : <Sparkles className="h-8 w-8 text-white" />}
               </div>
-              <h1 className="text-4xl font-light tracking-wide">Weekly Photo Challenge</h1>
+              <h1 className="text-4xl font-light tracking-wide">
+                {isStoryChallenge ? 'Weekly Story Challenge' : 'Weekly Photo Challenge'}
+              </h1>
             </div>
-            <p className="text-white/60 text-xl font-light">Upload 5 photos of your ModBrew experience to earn rewards!</p>
+            <p className="text-white/60 text-xl font-light">
+              {isStoryChallenge 
+                ? 'Submit a screenshot of you posting ModBrew to your story for a chance to win free merch!'
+                : 'Upload 5 photos of your ModBrew experience to earn rewards!'}
+            </p>
           </div>
         </div>
 
@@ -300,22 +374,24 @@ export default function WeeklyChallenge() {
         <Card className="mb-12 bg-white/5 border-white/10 backdrop-blur-sm card-override">
           <CardHeader>
             <CardTitle className="flex items-center text-2xl font-light text-white mb-2">
-              <Coffee className="h-6 w-6 mr-3 text-white" />
+              {isStoryChallenge ? <Gift className="h-6 w-6 mr-3 text-white" /> : <Coffee className="h-6 w-6 mr-3 text-white" />}
               Challenge Details
             </CardTitle>
             <CardDescription className="text-white/60 font-light text-lg">
-              Share your ModBrew moments and get 20% off your next purchase
+              {isStoryChallenge 
+                ? 'Share your ModBrew story and enter the raffle for free merch'
+                : 'Share your ModBrew moments and get 20% off your next purchase'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center p-6 bg-white/5 rounded-lg border border-white/10">
-                <div className="text-3xl font-light text-white mb-2">5</div>
-                <div className="text-white/60 font-light">Photos Required</div>
+                <div className="text-3xl font-light text-white mb-2">{requiredPhotos}</div>
+                <div className="text-white/60 font-light">{isStoryChallenge ? 'Screenshot Required' : 'Photos Required'}</div>
               </div>
               <div className="text-center p-6 bg-white/5 rounded-lg border border-white/10">
-                <div className="text-3xl font-light text-white mb-2">20%</div>
-                <div className="text-white/60 font-light">Discount Reward</div>
+                <div className="text-3xl font-light text-white mb-2">{isStoryChallenge ? 'Free Merch' : '20%'}</div>
+                <div className="text-white/60 font-light">{isStoryChallenge ? 'Raffle Prize' : 'Discount Reward'}</div>
               </div>
               <div className="text-center p-6 bg-white/5 rounded-lg border border-white/10">
                 <div className="text-3xl font-light text-white mb-2">∞</div>
@@ -328,16 +404,20 @@ export default function WeeklyChallenge() {
         {/* Photo Upload Section */}
         <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
           <CardHeader>
-            <CardTitle className="text-2xl font-light text-white mb-2">Upload Your Photos</CardTitle>
+            <CardTitle className="text-2xl font-light text-white mb-2">
+              {isStoryChallenge ? 'Upload Your Screenshot' : 'Upload Your Photos'}
+            </CardTitle>
             <CardDescription className="text-white/60 font-light text-lg">
-              Select up to 5 photos that showcase your ModBrew experience
+              {isStoryChallenge 
+                ? 'Select a screenshot of your ModBrew story post'
+                : 'Select up to 5 photos that showcase your ModBrew experience'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {/* File Input */}
             <div className="mb-8">
               <Label htmlFor="photo-upload" className="block mb-4 text-lg font-medium text-white">
-                Choose Photos
+                {isStoryChallenge ? 'Choose Screenshot' : 'Choose Photos'}
               </Label>
               
               {/* Modern Drag & Drop Zone */}
@@ -376,17 +456,24 @@ export default function WeeklyChallenge() {
                     
                     <div className="space-y-2">
                       <h3 className="text-lg font-medium text-white">
-                        {photos.length >= 5 ? 'Maximum Photos Selected' : isDragOver ? 'Drop photos here!' : 'Drop photos here or click to browse'}
+                        {photos.length >= requiredPhotos 
+                          ? (isStoryChallenge ? 'Screenshot Selected' : 'Maximum Photos Selected') 
+                          : isDragOver 
+                            ? (isStoryChallenge ? 'Drop screenshot here!' : 'Drop photos here!') 
+                            : (isStoryChallenge ? 'Drop screenshot here or click to browse' : 'Drop photos here or click to browse')
+                        }
                       </h3>
                       <p className="text-white/60">
-                        {photos.length >= 5 
-                          ? 'You can remove photos to add more' 
-                          : 'Select up to 5 photos (JPG, PNG, WebP)'
+                        {photos.length >= requiredPhotos 
+                          ? 'You can remove and replace your selection' 
+                          : isStoryChallenge
+                            ? 'Select 1 screenshot (JPG, PNG, WebP)'
+                            : 'Select up to 5 photos (JPG, PNG, WebP)'
                         }
                       </p>
                     </div>
                     
-                    {photos.length < 5 && (
+                    {photos.length < requiredPhotos && (
                       <div className="inline-flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors duration-200">
                         <span className="text-white font-medium">Browse Files</span>
                       </div>
@@ -398,9 +485,13 @@ export default function WeeklyChallenge() {
               {/* Photo Counter */}
               <div className="mt-4 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${photos.length === 5 ? 'bg-emerald-400' : 'bg-white/40'}`} />
+                  <div className={`w-2 h-2 rounded-full ${photos.length === requiredPhotos ? 'bg-emerald-400' : 'bg-white/40'}`} />
                   <span className="text-sm text-white/60">
-                    {photos.length === 5 ? 'Ready to submit' : `${photos.length}/5 photos selected`}
+                    {photos.length === requiredPhotos 
+                      ? 'Ready to submit' 
+                      : isStoryChallenge 
+                        ? `${photos.length}/1 screenshot selected`
+                        : `${photos.length}/5 photos selected`}
                   </span>
                 </div>
                 
@@ -432,7 +523,9 @@ export default function WeeklyChallenge() {
             {/* Photo Grid */}
             {photos.length > 0 && (
               <div className="mb-8">
-                <h3 className="text-lg font-medium text-white mb-6">Selected Photos</h3>
+                <h3 className="text-lg font-medium text-white mb-6">
+                  {isStoryChallenge ? 'Selected Screenshot' : 'Selected Photos'}
+                </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   {photos.map((photo) => (
                     <motion.div
@@ -506,8 +599,8 @@ export default function WeeklyChallenge() {
                   </>
                 ) : (
                   <>
-                    <Camera className="h-5 w-5 mr-3" />
-                    Submit Challenge
+                    {isStoryChallenge ? <Share2 className="h-5 w-5 mr-3" /> : <Camera className="h-5 w-5 mr-3" />}
+                    {isStoryChallenge ? 'Submit Screenshot' : 'Submit Challenge'}
                   </>
                 )}
               </Button>

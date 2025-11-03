@@ -13,6 +13,12 @@ import WeeklyChallenge from './pages/WeeklyChallenge'
 import ChallengeSubmissions from './pages/ChallengeSubmissions'
 import BrowseCoffee from './pages/BrowseCoffee'
 import AccountSettings from './pages/AccountSettings'
+import ProductPage from './pages/ProductPage'
+import StorePage from './pages/StorePage'
+import AboutPage from './pages/AboutPage'
+import PreorderPage from './pages/PreorderPage'
+import MemberPreorderPage from './pages/MemberPreorderPage'
+import ContactSupportPage from './pages/ContactSupportPage'
 import DashboardLayout from './components/layout/DashboardLayout'
 import Home from './admin-pages/Home'
 import Customers from './admin-pages/Customers'
@@ -28,7 +34,10 @@ function App() {
       <TooltipProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/store" element={<StorePage />} />
+          <Route path="/preorder" element={<PreorderPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/auth" element={
             <ProtectedRoute requireAuth={false}>
               <AuthPage />
@@ -44,19 +53,34 @@ function App() {
               <AccountSettings />
             </ProtectedRoute>
           } />
-          <Route path="/weekly-challenge" element={
+          <Route path="/brewery/weekly-challenge" element={
             <ProtectedRoute requireAuth={true}>
               <WeeklyChallenge />
             </ProtectedRoute>
           } />
-          <Route path="/challenge-submissions" element={
+          <Route path="/brewery/challenge-submissions" element={
             <ProtectedRoute requireAuth={true}>
               <ChallengeSubmissions />
             </ProtectedRoute>
           } />
-          <Route path="/coffee" element={
+          <Route path="/brewery/coffee" element={
             <ProtectedRoute requireAuth={true}>
               <BrowseCoffee />
+            </ProtectedRoute>
+          } />
+          <Route path="/brewery/product/hoodie" element={
+            <ProtectedRoute requireAuth={true}>
+              <ProductPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/brewery/preorder" element={
+            <ProtectedRoute requireAuth={true}>
+              <MemberPreorderPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/brewery/contact-support" element={
+            <ProtectedRoute requireAuth={true}>
+              <ContactSupportPage />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={

@@ -7,9 +7,11 @@ import { Separator } from '../components/ui/separator'
 import { ImageModal } from '../components/ui/image-modal'
 import { 
   ArrowLeft,
-  Image
+  Image,
+  Share2,
+  Camera
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LoadingSpinner } from '../components/ui/loading-spinner'
 
@@ -25,6 +27,7 @@ interface SubmissionImage {
 export default function ChallengeSubmissions() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [images, setImages] = useState<SubmissionImage[]>([])
   const [allImages, setAllImages] = useState<SubmissionImage[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,6 +36,10 @@ export default function ChallengeSubmissions() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [participantCount, setParticipantCount] = useState(0)
   const [imagesLoaded, setImagesLoaded] = useState(0)
+  
+  // Determine challenge type from URL parameter
+  const challengeType = searchParams.get('type') || 'photo' // 'photo' or 'story'
+  const isStoryChallenge = challengeType === 'story'
 
   const [displayedCount, setDisplayedCount] = useState(15)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -45,8 +52,10 @@ export default function ChallengeSubmissions() {
     }
 
     // Check if we have cached data in sessionStorage (persists during browser session)
-    const cachedData = sessionStorage.getItem('challengeSubmissions')
-    const cachedParticipantCount = sessionStorage.getItem('challengeParticipantCount')
+    const cacheKey = `challengeSubmissions-${challengeType}`
+    const countCacheKey = `challengeParticipantCount-${challengeType}`
+    const cachedData = sessionStorage.getItem(cacheKey)
+    const cachedParticipantCount = sessionStorage.getItem(countCacheKey)
     
     if (cachedData && cachedParticipantCount) {
       try {
@@ -58,7 +67,7 @@ export default function ChallengeSubmissions() {
         
         // For cached data, just show the page immediately - no preloading needed
         if (parsedData.length > 0) {
-          console.log(`Using cached data: ${parsedData.length} images available`)
+          console.log(`Using cached data: ${parsedData.length} images available for ${challengeType} challenge`)
           setShowContent(true) // Trigger content animation
           setTimeout(() => {
             setLoading(false) // Hide loading after animation starts
@@ -71,8 +80,8 @@ export default function ChallengeSubmissions() {
       } catch (err) {
         console.error('Error parsing cached data:', err)
         // If parsing fails, clear cache and fetch fresh data
-        sessionStorage.removeItem('challengeSubmissions')
-        sessionStorage.removeItem('challengeParticipantCount')
+        sessionStorage.removeItem(cacheKey)
+        sessionStorage.removeItem(countCacheKey)
       }
     }
 
@@ -97,10 +106,12 @@ export default function ChallengeSubmissions() {
   useEffect(() => {
     return () => {
       // Clear sessionStorage when leaving the page
-      sessionStorage.removeItem('challengeSubmissions')
-      sessionStorage.removeItem('challengeParticipantCount')
+      const cacheKey = `challengeSubmissions-${challengeType}`
+      const countCacheKey = `challengeParticipantCount-${challengeType}`
+      sessionStorage.removeItem(cacheKey)
+      sessionStorage.removeItem(countCacheKey)
     }
-  }, [])
+  }, [challengeType])
 
   // Track when all images are loaded (for display purposes only)
   useEffect(() => {
@@ -129,12 +140,14 @@ export default function ChallengeSubmissions() {
 
   const fetchParticipantCount = async () => {
     try {
+      // Fetch from the relevant challenge table based on challenge type
+      const tableName = isStoryChallenge ? 'weekly_challenges_2' : 'weekly_challenges'
       const { data: challenges, error } = await supabase
-        .from('weekly_challenges')
+        .from(tableName)
         .select('*')
 
       if (error) {
-        console.error('Error fetching participant count:', error)
+        console.error(`Error fetching ${tableName}:`, error)
         return 0
       }
 
@@ -189,55 +202,52 @@ export default function ChallengeSubmissions() {
       setError(null)
       setImagesLoaded(0) // Reset image load counter for new images
 
-      // List all files in the modbrew-5 bucket (no subfolders)
-      const { data: files, error: listError } = await supabase.storage
-        .from('modbrew-5')
-        .list('', {
-          limit: 1000,
-          offset: 0,
-          sortBy: { column: 'created_at', order: 'desc' }
-        })
+      // First, get the photo URLs from the relevant challenge table
+      const tableName = isStoryChallenge ? 'weekly_challenges_2' : 'weekly_challenges'
+      const { data: challenges, error: challengesError } = await supabase
+        .from(tableName)
+        .select('*')
 
-      if (listError) {
-        throw new Error(`Failed to list files: ${listError.message}`)
+      if (challengesError) {
+        throw new Error(`Failed to fetch challenges: ${challengesError.message}`)
       }
 
-      // Transform files into submission images
-      const submissionImages: SubmissionImage[] = await Promise.all(
-        files
-          .filter(file => file.name && !file.name.endsWith('/') && file.metadata?.size > 0) // Filter out folders and empty files
-          .map(async (file) => {
-            // Create 1-year signed URL for better access control
-            const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-              .from('modbrew-5')
-              .createSignedUrl(file.name, 31536000) // 1 year in seconds
+      if (!challenges || challenges.length === 0) {
+        setAllImages([])
+        setImages([])
+        setParticipantCount(0)
+        setShowContent(true)
+        setTimeout(() => {
+          setLoading(false)
+        }, 200)
+        return
+      }
 
-            if (signedUrlError) {
-              console.error('Error creating signed URL:', signedUrlError)
-              // Fallback to public URL if signed URL fails
-              const { data: { publicUrl } } = supabase.storage
-                .from('modbrew-5')
-                .getPublicUrl(file.name)
-              return {
-                id: file.id || file.name,
-                name: file.name,
-                url: publicUrl,
-                size: file.metadata?.size || 0,
-                created_at: file.created_at || new Date().toISOString(),
-                user_id: 'Anonymous' // Since we're not using user ID folders
-              }
-            }
+      // Extract photo URLs from challenges
+      const photoUrls: string[] = []
+      challenges.forEach(challenge => {
+        if (isStoryChallenge) {
+          // For story challenges, we have a single photo_url
+          if (challenge.photo_url) {
+            photoUrls.push(challenge.photo_url)
+          }
+        } else {
+          // For photo challenges, we have an array of photo_urls
+          if (challenge.photo_urls && Array.isArray(challenge.photo_urls)) {
+            photoUrls.push(...challenge.photo_urls)
+          }
+        }
+      })
 
-            return {
-              id: file.id || file.name,
-              name: file.name,
-              url: signedUrlData.signedUrl,
-              size: file.metadata?.size || 0,
-              created_at: file.created_at || new Date().toISOString(),
-              user_id: 'Anonymous' // Since we're not using user ID folders
-            }
-          })
-      )
+      // Transform URLs into submission images
+      const submissionImages: SubmissionImage[] = photoUrls.map((url, index) => ({
+        id: `submission-${index}`,
+        name: `submission-${index}`,
+        url: url,
+        size: 0, // We don't have size info from the URL
+        created_at: new Date().toISOString(),
+        user_id: 'Anonymous'
+      }))
 
       setAllImages(submissionImages)
       setImages(submissionImages.slice(0, displayedCount))
@@ -247,12 +257,13 @@ export default function ChallengeSubmissions() {
       if (participantCount !== undefined) {
         setParticipantCount(participantCount)
         // Cache both images and participant count together
-        sessionStorage.setItem('challengeSubmissions', JSON.stringify(submissionImages))
-        sessionStorage.setItem('challengeParticipantCount', participantCount.toString())
+        const cacheKey = `challengeSubmissions-${challengeType}`
+        const countCacheKey = `challengeParticipantCount-${challengeType}`
+        sessionStorage.setItem(cacheKey, JSON.stringify(submissionImages))
+        sessionStorage.setItem(countCacheKey, participantCount.toString())
       }
       
-              // No preloading needed - images will load when displayed
-      console.log(`Fetched ${submissionImages.length} images - will load on demand`)
+      console.log(`Fetched ${submissionImages.length} images for ${challengeType} challenge - will load on demand`)
       
     } catch (err) {
       console.error('Error fetching submissions:', err)
@@ -325,17 +336,25 @@ export default function ChallengeSubmissions() {
               Back to Hub
             </Button>
             <Separator orientation="vertical" className="h-6 bg-white/20" />
-            <h1 className="text-lg font-light tracking-wide">Challenge Submissions</h1>
+            <h1 className="text-lg font-light tracking-wide">
+              {isStoryChallenge ? 'Story Challenge Submissions' : 'Challenge Submissions'}
+            </h1>
           </div>
           
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
               <div className="p-3 rounded-full bg-white/10 mr-4">
-                <Image className="h-8 w-8 text-white" />
+                {isStoryChallenge ? <Share2 className="h-8 w-8 text-white" /> : <Camera className="h-8 w-8 text-white" />}
               </div>
-              <h1 className="text-4xl font-light tracking-wide">Challenge Submissions</h1>
+              <h1 className="text-4xl font-light tracking-wide">
+                {isStoryChallenge ? 'Story Challenge Submissions' : 'Challenge Submissions'}
+              </h1>
             </div>
-            <p className="text-white/60 text-xl font-light">View all ModBrew challenge submissions</p>
+            <p className="text-white/60 text-xl font-light">
+              {isStoryChallenge 
+                ? 'View all ModBrew story challenge submissions' 
+                : 'View all ModBrew challenge submissions'}
+            </p>
           </div>
         </div>
 
@@ -386,7 +405,7 @@ export default function ChallengeSubmissions() {
                   className="group"
                 >
                   <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override overflow-hidden hover:bg-white/10 transition-all duration-300">
-                    <div className="aspect-square overflow-hidden cursor-pointer relative group" onClick={() => openImageModal(image)}>
+                    <div className="overflow-hidden cursor-pointer relative group" style={{ aspectRatio: '9/16' }} onClick={() => openImageModal(image)}>
                       <img
                         src={image.url}
                         alt={image.name}

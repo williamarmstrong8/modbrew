@@ -11,16 +11,14 @@ import {
   Calendar, 
   Settings, 
   LogOut, 
-  Gift, 
   Star, 
   Users, 
   Clock,
   ArrowRight,
-  Sparkles,
   Heart,
-  Zap,
   CheckCircle,
-  BarChart3
+  BarChart3,
+  Share2
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -32,7 +30,7 @@ export default function MemberHub() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const [membership, setMembership] = useState<Membership | null>(null)
-  const [challengeStatus, setChallengeStatus] = useState<'not_started' | 'in_progress' | 'completed' | null>(null)
+  const [storyChallengeStatus, setStoryChallengeStatus] = useState<'not_started' | 'in_progress' | 'completed' | null>(null)
 
   const [loading, setLoading] = useState(true)
 
@@ -67,26 +65,34 @@ export default function MemberHub() {
         }
 
         // Fetch weekly challenge status using raw SQL to avoid query builder issues
-        const { data: challengeData, error: challengeError } = await supabase
+        const { error: challengeError } = await supabase
           .rpc('get_user_challenge_status', { user_uuid: user.id })
 
         if (challengeError) {
           console.error('Error fetching challenge status:', challengeError)
         }
 
-        // Determine challenge status
-        let status: 'not_started' | 'in_progress' | 'completed' = 'not_started'
-        if (challengeData && challengeData.length > 0) {
-          const challenge = challengeData[0]
+        // Fetch story challenge status
+        const { data: storyChallengeData, error: storyChallengeError } = await supabase
+          .rpc('get_user_challenge_2_status', { user_uuid: user.id })
+
+        if (storyChallengeError) {
+          console.error('Error fetching story challenge status:', storyChallengeError)
+        }
+
+        // Determine story challenge status
+        let storyStatus: 'not_started' | 'in_progress' | 'completed' = 'not_started'
+        if (storyChallengeData && storyChallengeData.length > 0) {
+          const challenge = storyChallengeData[0]
           if (challenge.status === 'completed') {
-            status = 'completed'
+            storyStatus = 'completed'
           } else if (challenge.status === 'in_progress') {
-            status = 'in_progress'
+            storyStatus = 'in_progress'
           }
         }
 
         setMembership(membershipData)
-        setChallengeStatus(status)
+        setStoryChallengeStatus(storyStatus)
       } catch (error) {
         console.error('Error fetching user data:', error)
         // If there's an error, redirect to signup as a fallback
@@ -104,7 +110,7 @@ export default function MemberHub() {
     if (!user?.id) return
 
     try {
-      const { data: challengeData, error: challengeError } = await supabase
+      const { error: challengeError } = await supabase
         .rpc('get_user_challenge_status', { user_uuid: user.id })
 
       if (challengeError) {
@@ -112,17 +118,25 @@ export default function MemberHub() {
         return
       }
 
-      let status: 'not_started' | 'in_progress' | 'completed' = 'not_started'
-      if (challengeData && challengeData.length > 0) {
-        const challenge = challengeData[0]
+      const { data: storyChallengeData, error: storyChallengeError } = await supabase
+        .rpc('get_user_challenge_2_status', { user_uuid: user.id })
+
+      if (storyChallengeError) {
+        console.error('Error fetching story challenge status:', storyChallengeError)
+        return
+      }
+
+      let storyStatus: 'not_started' | 'in_progress' | 'completed' = 'not_started'
+      if (storyChallengeData && storyChallengeData.length > 0) {
+        const challenge = storyChallengeData[0]
         if (challenge.status === 'completed') {
-          status = 'completed'
+          storyStatus = 'completed'
         } else if (challenge.status === 'in_progress') {
-          status = 'in_progress'
+          storyStatus = 'in_progress'
         }
       }
 
-              setChallengeStatus(status)
+      setStoryChallengeStatus(storyStatus)
     } catch (error) {
       console.error('Error refreshing challenge status:', error)
     }
@@ -143,33 +157,6 @@ export default function MemberHub() {
 
 
 
-
-  const getMembershipBenefits = (type: string) => {
-    switch (type) {
-      case 'vip':
-        return [
-          { icon: <Star className="h-5 w-5" />, text: 'Exclusive VIP Events', color: 'text-purple-400' },
-          { icon: <Gift className="h-5 w-5" />, text: 'Monthly Gift Box', color: 'text-pink-400' },
-          { icon: <Sparkles className="h-5 w-5" />, text: 'Priority Access', color: 'text-yellow-400' },
-          { icon: <Heart className="h-5 w-5" />, text: 'Personal Concierge', color: 'text-red-400' }
-        ]
-      case 'premium':
-        return [
-          { icon: <Star className="h-5 w-5" />, text: 'Premium Coffee Access', color: 'text-blue-400' },
-          { icon: <Calendar className="h-5 w-5" />, text: 'Member Events', color: 'text-cyan-400' },
-          { icon: <Users className="h-5 w-5" />, text: 'Community Access', color: 'text-indigo-400' },
-          { icon: <Zap className="h-5 w-5" />, text: 'Fast Support', color: 'text-orange-400' }
-        ]
-      case 'basic':
-        return [
-          { icon: <Coffee className="h-5 w-5" />, text: 'Coffee Discounts', color: 'text-emerald-400' },
-          { icon: <Calendar className="h-5 w-5" />, text: 'Event Access', color: 'text-teal-400' },
-          { icon: <Users className="h-5 w-5" />, text: 'Member Community', color: 'text-green-400' }
-        ]
-      default:
-        return []
-    }
-  }
 
   if (loading) {
     return (
@@ -204,8 +191,6 @@ export default function MemberHub() {
     )
   }
 
-  const benefits = getMembershipBenefits(membership.membership_type)
-  
   // Calculate membership duration
   const startDate = new Date(membership.start_date)
   const now = new Date()
@@ -294,12 +279,79 @@ export default function MemberHub() {
             </div>
           </motion.div>
 
+          {/* Featured Product Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="mb-12"
+          >
+            <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override overflow-hidden group hover:bg-white/10 transition-all duration-300">
+              <div className="flex flex-col md:flex-row md:h-96">
+                {/* Product Image */}
+                <div className="h-64 md:h-full bg-black/20 flex items-center justify-center relative overflow-hidden md:w-auto">
+                  <img 
+                    src="/images/hoodie-mockup.png" 
+                    alt="Mod Brew Hoodie" 
+                    className="h-full w-auto object-contain group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <Badge className="absolute top-4 left-4 bg-white/10 text-white/90 border-white/20 backdrop-blur-sm">
+                    Featured
+                  </Badge>
+                </div>
+                
+                {/* Product Content */}
+                <div className="flex flex-col flex-1">
+                  <CardHeader className="pb-4 pt-6">
+                    <CardTitle className="text-2xl font-light text-white mb-2">
+                      Exclusive Member Blend
+                    </CardTitle>
+                    <CardDescription className="text-white/60 font-light">
+                      A limited edition coffee crafted exclusively for ModBrew members
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col justify-between space-y-4 flex-1">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-4">
+                        <div className="text-3xl font-light text-white">
+                          $49
+                        </div>
+                        <div className="text-lg text-white/40 line-through">
+                          $59
+                        </div>
+                      </div>
+                      <p className="text-white/80 font-light text-sm leading-relaxed">
+                        Experience our signature blend with notes of chocolate, caramel, and a smooth finish. 
+                        Members save 15% on this exclusive offering.
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button 
+                        onClick={() => navigate('/brewery/product/hoodie')}
+                        className="flex-1 bg-white text-black hover:bg-white/90 transition-all duration-200"
+                      >
+                        View Product
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                      <Button 
+                        onClick={() => navigate('/brewery/preorder')}
+                        className="flex-1 bg-white text-black hover:bg-white/90 transition-all duration-200"
+                      >
+                        Preorder
+                      </Button>
+                    </div>
+                  </CardContent>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
           {/* Admin Section - Only visible to admin users */}
           {membership.role === 'admin' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.15 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
               className="mb-12"
             >
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
@@ -350,7 +402,7 @@ export default function MemberHub() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.25 : 0.15 }}
+            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.3 : 0.2 }}
             className="mb-12"
           >
             <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
@@ -358,10 +410,10 @@ export default function MemberHub() {
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
                   <div>
                     <CardTitle className="text-2xl font-light text-white mb-2">
-                      Weekly Challenge
+                      Story Challenge
                     </CardTitle>
                     <CardDescription className="text-white/60 font-light">
-                      Upload 5 images of ModBrew for 20% off your next purchase
+                      Share a screenshot of your ModBrew story for a chance to win free merch
                     </CardDescription>
                   </div>
                   <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 mt-1">
@@ -376,7 +428,7 @@ export default function MemberHub() {
                     <div className="flex items-center space-x-4">
                       <div className="p-3 rounded-lg bg-white/10 flex-shrink-0">
                         <AnimatePresence mode="wait">
-                          {challengeStatus === 'completed' ? (
+                          {storyChallengeStatus === 'completed' ? (
                             <motion.div 
                               key="icon-completed"
                               initial={{ opacity: 0, scale: 0.9 }}
@@ -394,25 +446,25 @@ export default function MemberHub() {
                               exit={{ opacity: 0, scale: 0.9 }}
                               transition={{ duration: 0.2 }}
                             >
-                              <Coffee className="h-5 w-5 text-white" />
+                              <Share2 className="h-5 w-5 text-white" />
                             </motion.div>
                           )}
                         </AnimatePresence>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white font-medium">Upload 5 ModBrew Images</p>
+                        <p className="text-white font-medium">Submit Story Screenshot</p>
                         <p className="text-white/60 text-sm">
-                          {challengeStatus === 'completed' 
-                            ? 'Challenge completed! You earned 20% off your next purchase' 
-                            : 'Get 20% off your next purchase'
+                          {storyChallengeStatus === 'completed' 
+                            ? 'Challenge completed! You\'re entered in the raffle' 
+                            : 'Enter the raffle for free merch'
                           }
                         </p>
                       </div>
                     </div>
                     <AnimatePresence mode="wait">
-                      {challengeStatus === 'completed' ? (
+                      {storyChallengeStatus === 'completed' ? (
                         <motion.div 
-                          key="challenge-completed"
+                          key="story-challenge-completed"
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.9 }}
@@ -420,7 +472,7 @@ export default function MemberHub() {
                           className="flex-shrink-0"
                         >
                           <Button 
-                            onClick={() => navigate('/challenge-submissions')}
+                            onClick={() => navigate('/brewery/challenge-submissions?type=story')}
                             className="w-full sm:w-auto bg-white text-black hover:bg-white/90 transition-all duration-200"
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
@@ -429,7 +481,7 @@ export default function MemberHub() {
                         </motion.div>
                       ) : (
                         <motion.div 
-                          key="challenge-not-completed"
+                          key="story-challenge-not-completed"
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.9 }}
@@ -437,10 +489,10 @@ export default function MemberHub() {
                           className="flex-shrink-0"
                         >
                           <Button 
-                            onClick={() => navigate('/weekly-challenge')}
+                            onClick={() => navigate('/brewery/weekly-challenge?type=story')}
                             className="w-full sm:w-auto bg-white text-black hover:bg-white/90 transition-all duration-200"
                           >
-                            {challengeStatus === 'in_progress' ? 'Continue' : 'Participate'}
+                            {storyChallengeStatus === 'in_progress' ? 'Continue' : 'Participate'}
                           </Button>
                         </motion.div>
                       )}
@@ -451,24 +503,24 @@ export default function MemberHub() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10">
                     <div className="text-center">
                       <div className="text-xl font-medium text-white mb-1">
-                        {challengeStatus === 'completed' ? '✓' : '∞'}
+                        {storyChallengeStatus === 'completed' ? '✓' : '∞'}
                       </div>
                       <div className="text-white/60 text-sm">
-                        {challengeStatus === 'completed' ? 'Completed' : 'Always Open'}
+                        {storyChallengeStatus === 'completed' ? 'Completed' : 'Always Open'}
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-medium text-white mb-1">
-                        {challengeStatus === 'completed' ? '5' : '5'}
+                        {storyChallengeStatus === 'completed' ? '1' : '1'}
                       </div>
                       <div className="text-white/60 text-sm">
-                        {challengeStatus === 'completed' ? 'Photos Uploaded' : 'Photos Required'}
+                        {storyChallengeStatus === 'completed' ? 'Screenshot Uploaded' : 'Screenshot Required'}
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-medium text-white mb-1">20%</div>
+                      <div className="text-xl font-medium text-white mb-1">Free Merch</div>
                       <div className="text-white/60 text-sm">
-                        {challengeStatus === 'completed' ? 'Reward Earned' : 'Discount'}
+                        {storyChallengeStatus === 'completed' ? 'Raffle Entry' : 'Raffle Ticket'}
                       </div>
                     </div>
                   </div>
@@ -477,11 +529,12 @@ export default function MemberHub() {
             </Card>
           </motion.div>
 
+
           {/* Membership Status Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.25 }}
+            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.35 : 0.25 }}
             className="mb-12"
           >
             <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
@@ -530,7 +583,7 @@ export default function MemberHub() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.4 : 0.3 }}
+            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.45 : 0.35 }}
             className="mb-12"
           >
             <div className="mb-8">
@@ -544,7 +597,7 @@ export default function MemberHub() {
                 value={daysActive}
                 description="Time as a member"
                 color="text-blue-400"
-                delay={membership.role === 'admin' ? 0.4 : 0.3}
+                delay={membership.role === 'admin' ? 0.45 : 0.35}
               />
               <StatsCard
                 icon={Star}
@@ -552,7 +605,7 @@ export default function MemberHub() {
                 value={membership.membership_type.toUpperCase()}
                 description="Your current tier"
                 color="text-yellow-400"
-                delay={membership.role === 'admin' ? 0.5 : 0.4}
+                delay={membership.role === 'admin' ? 0.55 : 0.45}
               />
               <StatsCard
                 icon={Heart}
@@ -560,48 +613,8 @@ export default function MemberHub() {
                 value={membership.status.toUpperCase()}
                 description="Account status"
                 color="text-emerald-400"
-                delay={membership.role === 'admin' ? 0.6 : 0.5}
+                delay={membership.role === 'admin' ? 0.65 : 0.55}
               />
-            </div>
-          </motion.div>
-
-          {/* Member Benefits Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.5 : 0.4 }}
-            className="mb-12"
-          >
-            <div className="mb-8">
-              <h3 className="text-2xl font-light mb-2">Your Benefits</h3>
-              <p className="text-white/60 font-light">Explore what your membership includes</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {benefits.map((benefit, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: (membership.role === 'admin' ? 0.6 : 0.5) + index * 0.1 }}
-                  whileHover={{ y: -5 }}
-                >
-                  <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full group hover:bg-white/10 transition-all duration-300">
-                    <CardContent className="p-6">
-                      <div className="flex items-start space-x-4">
-                        <div className={`p-3 rounded-lg bg-white/10 group-hover:bg-white/20 transition-all duration-300 ${benefit.color}`}>
-                          {benefit.icon}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-white mb-2">{benefit.text}</h4>
-                          <p className="text-white/60 text-sm font-light">
-                            Enjoy exclusive access to premium features and experiences
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
             </div>
           </motion.div>
 
@@ -609,7 +622,7 @@ export default function MemberHub() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.65 : 0.55 }}
+            transition={{ duration: 0.6, delay: membership.role === 'admin' ? 0.7 : 0.6 }}
           >
             <Card className="bg-white/5 border-white/10 backdrop-blur-sm card-override">
               <CardHeader className="pb-6">
@@ -622,7 +635,7 @@ export default function MemberHub() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button 
-                      onClick={() => navigate('/coffee')}
+                      onClick={() => navigate('/brewery/coffee')}
                       className="w-full bg-white text-black hover:bg-white/90 transition-all duration-200 h-12"
                     >
                       <Coffee className="h-4 w-4 mr-2" />
@@ -648,7 +661,10 @@ export default function MemberHub() {
                     </Button>
                   </motion.div>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button className="w-full bg-white text-black hover:bg-white/90 transition-all duration-200 h-12">
+                    <Button 
+                      onClick={() => navigate('/brewery/contact-support')}
+                      className="w-full bg-white text-black hover:bg-white/90 transition-all duration-200 h-12"
+                    >
                       <Users className="h-4 w-4 mr-2" />
                       Contact Support
                       <ArrowRight className="h-4 w-4 ml-2" />
@@ -663,7 +679,7 @@ export default function MemberHub() {
       {/* Floating Action Button */}
       <FloatingActionButton
         icon={Coffee}
-        onClick={() => navigate('/coffee')}
+        onClick={() => navigate('/brewery/coffee')}
         label="Browse Coffee"
       />
     </div>
