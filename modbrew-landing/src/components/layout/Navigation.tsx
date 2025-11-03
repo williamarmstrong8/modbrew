@@ -39,6 +39,19 @@ export default function Navigation() {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.5 }}
+            >
+              <Button asChild variant="ghost" className="font-medium tracking-wide text-white hover:bg-transparent hover:text-white group text-sm sm:text-base">
+                <a href="/store" className="relative">
+                  Store
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-600 group-hover:w-full"></span>
+                </a>
+              </Button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
             >
               <Button asChild variant="ghost" className="font-medium tracking-wide text-white hover:bg-transparent hover:text-white group text-sm sm:text-base">
@@ -92,6 +105,19 @@ export default function Navigation() {
                 </Button>
               </motion.div>
             )}
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.9 }}
+            >
+              <Button asChild variant="ghost" className="font-medium tracking-wide text-white hover:bg-transparent hover:text-white group text-sm sm:text-base">
+                <a href="/about" className="relative">
+                  About
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-600 group-hover:w-full"></span>
+                </a>
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
       </div>

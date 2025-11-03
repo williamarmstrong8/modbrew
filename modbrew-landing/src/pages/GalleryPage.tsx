@@ -8,18 +8,18 @@ export default function GalleryPage() {
       {/* Modern Gallery Grid */}
       <section className="pt-28 pb-16">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
             {/* Gallery images with containers sized to fit images */}
             <div className="group cursor-pointer">
               <img 
-                src="/images/DSCF2304.jpg" 
+                src="/images/DSCF2309.jpg" 
                 alt="ModBrew Gallery" 
                 className="w-full h-auto rounded-lg group-hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="group cursor-pointer">
               <img 
-                src="/images/DSCF2309.jpg" 
+                src="/images/DSCF2312.jpg" 
                 alt="ModBrew Gallery" 
                 className="w-full h-auto rounded-lg group-hover:scale-105 transition-transform duration-300"
               />
