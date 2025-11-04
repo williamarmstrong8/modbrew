@@ -313,7 +313,7 @@ export default function MemberHub() {
                   <CardContent className="flex flex-col justify-between space-y-4 flex-1">
                     <div className="space-y-2">
                       <div className="flex items-center space-x-4">
-                        <div className="text-3xl font-light text-white">
+                        <div className="text-3xl font-light text-emerald-400">
                           $49
                         </div>
                         <div className="text-lg text-white/40 line-through">
@@ -321,8 +321,12 @@ export default function MemberHub() {
                         </div>
                       </div>
                       <p className="text-white/80 font-light text-sm leading-relaxed">
-                        Experience our signature blend with notes of chocolate, caramel, and a smooth finish. 
-                        Members save 15% on this exclusive offering.
+                        Made from premium quality materials, this exclusive Mod Brew hoodie features our 
+                        iconic branding and is perfect for representing your ModBrew membership in style. 
+                        Experience premium comfort with our exclusive pullover design. The classic design 
+                        pairs perfectly with any outfit while showcasing your connection to the ModBrew 
+                        community. With front kangaroo pocket and comfortable fit for everyday wear, this 
+                        is the perfect way to show your ModBrew pride. Members save 15% on this exclusive offering.
                       </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3">

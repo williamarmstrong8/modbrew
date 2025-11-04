@@ -13,9 +13,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 export function TopNav() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black backdrop-blur-sm">
-      <div className="flex h-16 items-center justify-end px-6">
-        {/* Right side */}
-        <div className="flex items-center space-x-4">
+      <div className="flex h-16 items-center px-6 relative">
+        {/* Mod Brew Logo - Centered */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+          <img 
+            src="/images/Mod Brew SMall White.png" 
+            alt="Mod Brew Logo" 
+            className="h-8 w-auto"
+          />
+        </div>
+        
+        {/* Right side - User Menu */}
+        <div className="ml-auto flex items-center space-x-4">
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

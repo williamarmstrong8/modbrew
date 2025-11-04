@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/layout/Navigation'
 import { Separator } from '../components/ui/separator'
 import { Button } from '../components/ui/button'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
 import useEmblaCarousel from 'embla-carousel-react'
 
 const aboutImages = [
@@ -15,6 +16,7 @@ const aboutImages = [
 ]
 
 export default function AboutPage() {
+  const navigate = useNavigate()
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     slidesToScroll: 1,
     align: 'center',
@@ -65,7 +67,7 @@ export default function AboutPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-8 sm:mb-16"
+            className="text-center mb-6 sm:mb-10"
           >
             <h1 className="text-5xl font-light tracking-wide mb-4">About ModBrew</h1>
             <p className="text-xl text-white/60 font-light max-w-2xl mx-auto">
@@ -81,7 +83,7 @@ export default function AboutPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               {/* Mobile Carousel */}
-              <div className="block sm:hidden mb-6 py-4 overflow-visible relative">
+              <div className="block sm:hidden mb-10 py-4 overflow-visible relative">
                 <div className="overflow-hidden" ref={emblaRef}>
                   <div className="flex py-4">
                     {aboutImages.map((image, index) => {
@@ -123,27 +125,32 @@ export default function AboutPage() {
               </div>
 
               {/* Desktop Grid */}
-              <div className="hidden sm:flex justify-center gap-4 mb-6 flex-wrap">
+              <div className="hidden sm:flex justify-center gap-4 mb-10 flex-wrap">
                 {aboutImages.map((image, index) => (
                   <img 
                     key={index}
                     src={image.src} 
                     alt={image.alt} 
-                    className="w-48 h-auto rounded-lg object-cover"
+                    className="w-48 h-auto rounded-lg object-cover transition-transform duration-300 hover:scale-105 cursor-pointer"
                   />
                 ))}
               </div>
               <h2 className="text-3xl font-light text-white mb-4">Our Story</h2>
               <div className="space-y-4 text-white/80 font-light leading-relaxed">
                 <p>
-                  ModBrew was born from a passion for exceptional coffee and a desire to create a 
-                  community around the craft. We believe that great coffee is more than just a drink—it's 
-                  an experience that brings people together.
+                  ModBrew started from our love for quality coffee. It began as a little coffee operation 
+                  out of a college dorm and evolved into a campus wide community movement. People from all 
+                  ages all around Boston College started raving about ModBrew, and lines and members grew rapidly.
                 </p>
                 <p>
-                  Our commitment is to source the finest beans, perfect our brewing techniques, and 
-                  share our love of coffee with a community of enthusiasts who appreciate quality, 
-                  artistry, and the ritual of a perfect cup.
+                  What made ModBrew special wasn't just the coffee, it was the community. People would come 
+                  for the coffee and stay for the new friends made. This community first approach became 
+                  the heart of everything we do.
+                </p>
+                <p>
+                  Boston College loved the initiative so much that ModBrew evolved to become fully funded 
+                  by the university. Now, coffee is free for all students, funded by Boston College, 
+                  allowing us to continue serving quality coffee and building community across campus.
                 </p>
               </div>
             </motion.div>
@@ -158,13 +165,14 @@ export default function AboutPage() {
               <h2 className="text-3xl font-light text-white mb-4">Our Mission</h2>
               <div className="space-y-4 text-white/80 font-light leading-relaxed">
                 <p>
-                  To provide our community with exceptional coffee experiences while fostering 
-                  connections and appreciation for the craft. We're dedicated to quality, 
-                  sustainability, and creating a space where coffee lovers can come together.
+                  Our mission is to serve quality coffee to BC students and provide both exceptional 
+                  coffee and a strong sense of community. Community is huge for us, it's the reason we 
+                  started this in the first place.
                 </p>
                 <p>
-                  Through our membership program, exclusive events, and carefully curated products, 
-                  we aim to build a community that celebrates the art and science of coffee.
+                  We believe that coffee brings people together. Students come for the coffee and stay 
+                  for the connections, conversations, and friendships that form around every cup. Through 
+                  our commitment to quality and community, we're building a space where everyone belongs.
                 </p>
               </div>
             </motion.div>
@@ -181,11 +189,44 @@ export default function AboutPage() {
                 <p>
                   Become part of the ModBrew community. Whether you're a casual coffee drinker or 
                   a dedicated enthusiast, there's a place for you here. Join our membership program 
-                  to access exclusive content, events, and products.
+                  to access exclusive content, events, and products, and be part of the movement that 
+                  started in a dorm room and became a campus wide community.
                 </p>
               </div>
             </motion.div>
           </div>
+
+          {/* CTA Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="mt-16 text-center"
+          >
+            <div className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-lg p-8 sm:p-12 max-w-2xl mx-auto">
+              <h2 className="text-3xl font-light text-white mb-4">Ready to Join the Community?</h2>
+              <p className="text-white/60 font-light text-lg mb-8">
+                Become a member and be part of the ModBrew movement. Access exclusive content, events, and products.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  onClick={() => navigate('/store')}
+                  className="bg-white text-black hover:bg-white/90 transition-all duration-200 h-12 text-lg"
+                >
+                  Visit Store
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+                <Button 
+                  onClick={() => navigate('/auth?mode=signup')}
+                  variant="outline"
+                  className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white transition-all duration-200 h-12 text-lg"
+                >
+                  Sign Up
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

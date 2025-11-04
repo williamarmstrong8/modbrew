@@ -33,8 +33,8 @@ const breweryButton = {
 export function AppSidebar() {
   return (
     <Sidebar className="border-r border-white/10 bg-black backdrop-blur-sm">
-      <SidebarHeader className="pt-8 pb-2 px-6 border-b border-white/10">
-        <div className="flex items-center justify-start">
+      <SidebarHeader className="h-16 flex-row items-center px-6 py-0 border-b border-white/10">
+        <div className="flex items-center justify-start h-full">
           <img 
             src="/images/Mod Brew Long.png" 
             alt="Mod Brew Logo" 

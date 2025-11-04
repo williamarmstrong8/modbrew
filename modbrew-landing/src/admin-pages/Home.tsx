@@ -4,7 +4,7 @@ import { Input } from "../components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import DatePicker from "../components/ui/date-picker";
-import { Users, DollarSign, TrendingUp, UserPlus, Minus } from "lucide-react";
+import { Users, DollarSign, TrendingUp, UserPlus, Minus, Download } from "lucide-react";
 import { useState } from "react";
 import { useAdminContext } from "../contexts/AdminContext";
 import { toast } from "sonner";
@@ -74,6 +74,52 @@ const Home = () => {
       }
     } else {
       toast.error('Please fill in all fields with valid values');
+    }
+  };
+
+  const handleExportEmails = () => {
+    try {
+      // Get all memberships with name and email
+      const memberships = adminData.memberships.map((membership) => ({
+        name: membership.name || "Unknown",
+        email: membership.email || ""
+      }));
+
+      if (memberships.length === 0) {
+        toast.error('No members to export');
+        return;
+      }
+
+      // Create CSV content
+      const headers = ['Name', 'Email'];
+      const csvRows = [
+        headers.join(','),
+        ...memberships.map(member => {
+          // Escape commas and quotes in CSV values
+          const name = `"${member.name.replace(/"/g, '""')}"`;
+          const email = `"${member.email.replace(/"/g, '""')}"`;
+          return `${name},${email}`;
+        })
+      ];
+
+      const csvContent = csvRows.join('\n');
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `modbrew-emails-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(`Exported ${memberships.length} emails to CSV`);
+    } catch (error) {
+      console.error('Error exporting emails:', error);
+      toast.error('Failed to export emails');
     }
   };
 
@@ -342,6 +388,13 @@ const Home = () => {
                 </Button>
               )
             ))}
+            <Button
+              onClick={handleExportEmails}
+              className="w-full h-14 bg-white text-black border-white hover:bg-white hover:text-black transition-all duration-200"
+            >
+              <Download className="w-5 h-5 mr-3" />
+              Export Emails
+            </Button>
           </CardContent>
         </Card>
 
